@@ -1,104 +1,42 @@
 module token;
 
-# A single token produced by the lexer.
-# Every token carries its position for error reporting.
+enum TokenKind {
+    # Keywords
+    And, Or, Not,
+    If, Else,
+    For, In, While,
+    Match, Return, Break,
+    True, False,
+    Void, Empty, None, Some,
+    Ok, Error,
+    Is, As,
+    Use, Module,
+    Struct, Enum,
+    Private, Const, Mutable, Affine, Bare,
+    Generic, Range,
+    # Types
+    Int, Float, String, Bool, Char,
+    List, Table, Option, Result,
+    # Literals
+    IntLit, FloatLit, StringLit, CharLit, Interp,
+    # Identifier
+    Ident,
+    # Arithmetic
+    Plus, Minus, Star, Slash, Percent,
+    # Comparison
+    Eq, Neq, Lt, Gt, Lte, Gte,
+    # Assignment
+    Assign, PlusEq, MinusEq, StarEq, SlashEq,
+    # Delimiters
+    LParen, RParen, LBrace, RBrace, LBracket, RBracket,
+    Semicolon, Comma, Colon, ColonColon, Dot, DotDot,
+    # Special
+    Eof, Illegal,
+}
+
 struct Token {
-    string kind;
+    TokenKind kind;
     string value;
     int line;
     int col;
 }
-
-# All token kinds in Slate.
-# Keywords — language syntax
-const string TK_AND        = "and";
-const string TK_OR         = "or";
-const string TK_NOT        = "not";
-const string TK_IF         = "if";
-const string TK_ELSE       = "else";
-const string TK_FOR        = "for";
-const string TK_IN         = "in";
-const string TK_WHILE      = "while";
-const string TK_MATCH      = "match";
-const string TK_RETURN     = "return";
-const string TK_BREAK      = "break";
-const string TK_TRUE       = "true";
-const string TK_FALSE      = "false";
-const string TK_VOID       = "void";
-const string TK_EMPTY      = "empty";
-const string TK_NONE       = "none";
-const string TK_SOME       = "some";
-const string TK_OK         = "ok";
-const string TK_ERROR      = "error";
-const string TK_IS         = "is";
-const string TK_AS         = "as";
-const string TK_USE        = "use";
-const string TK_MODULE     = "module";
-const string TK_STRUCT     = "struct";
-const string TK_PRIVATE    = "private";
-const string TK_CONST      = "const";
-const string TK_MUTABLE    = "mutable";
-const string TK_AFFINE     = "affine";
-const string TK_BARE       = "bare";
-const string TK_GENERIC    = "generic";
-const string TK_RANGE      = "range";
-
-# Types
-const string TK_INT        = "int";
-const string TK_FLOAT      = "float";
-const string TK_STRING     = "string";
-const string TK_BOOL       = "bool";
-const string TK_CHAR       = "char";
-const string TK_LIST       = "list";
-const string TK_TABLE      = "table";
-const string TK_OPTION     = "option";
-const string TK_RESULT     = "result";
-
-# Literals
-const string TK_INT_LIT    = "int_literal";
-const string TK_FLOAT_LIT  = "float_literal";
-const string TK_STRING_LIT = "string_literal";
-const string TK_CHAR_LIT   = "char_literal";
-const string TK_INTERP     = "interpolation";
-
-# Identifiers
-const string TK_IDENT      = "identifier";
-
-# Arithmetic operators
-const string TK_PLUS       = "+";
-const string TK_MINUS      = "-";
-const string TK_STAR       = "*";
-const string TK_SLASH      = "/";
-const string TK_PERCENT    = "%";
-
-# Comparison operators
-const string TK_EQ         = "==";
-const string TK_NEQ        = "!=";
-const string TK_LT         = "<";
-const string TK_GT         = ">";
-const string TK_LTE        = "<=";
-const string TK_GTE        = ">=";
-
-# Assignment operators
-const string TK_ASSIGN     = "=";
-const string TK_PLUS_EQ    = "+=";
-const string TK_MINUS_EQ   = "-=";
-const string TK_STAR_EQ    = "*=";
-const string TK_SLASH_EQ   = "/=";
-
-# Delimiters
-const string TK_LPAREN     = "(";
-const string TK_RPAREN     = ")";
-const string TK_LBRACE     = "{";
-const string TK_RBRACE     = "}";
-const string TK_LBRACKET   = "[";
-const string TK_RBRACKET   = "]";
-const string TK_SEMICOLON  = ";";
-const string TK_COMMA      = ",";
-const string TK_COLON      = ":";
-const string TK_DOT        = ".";
-const string TK_DOTDOT     = "..";
-
-# Special
-const string TK_EOF        = "eof";
-const string TK_ILLEGAL    = "illegal";
