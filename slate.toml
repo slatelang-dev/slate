@@ -1,0 +1,5 @@
+[project]
+name = "slate"
+version = "0.1.0"
+description = "Core library for the Slate programming language"
+entry = "source/main.slt"
