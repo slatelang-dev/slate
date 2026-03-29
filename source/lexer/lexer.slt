@@ -1,0 +1,474 @@
+module lexer;
+
+use token;
+
+# Character classification helpers
+bool is_digit(string ch) {
+    return ch == "0" or ch == "1" or ch == "2" or ch == "3" or ch == "4"
+        or ch == "5" or ch == "6" or ch == "7" or ch == "8" or ch == "9";
+}
+
+bool is_alpha(string ch) {
+    return ch == "a" or ch == "b" or ch == "c" or ch == "d" or ch == "e"
+        or ch == "f" or ch == "g" or ch == "h" or ch == "i" or ch == "j"
+        or ch == "k" or ch == "l" or ch == "m" or ch == "n" or ch == "o"
+        or ch == "p" or ch == "q" or ch == "r" or ch == "s" or ch == "t"
+        or ch == "u" or ch == "v" or ch == "w" or ch == "x" or ch == "y"
+        or ch == "z"
+        or ch == "A" or ch == "B" or ch == "C" or ch == "D" or ch == "E"
+        or ch == "F" or ch == "G" or ch == "H" or ch == "I" or ch == "J"
+        or ch == "K" or ch == "L" or ch == "M" or ch == "N" or ch == "O"
+        or ch == "P" or ch == "Q" or ch == "R" or ch == "S" or ch == "T"
+        or ch == "U" or ch == "V" or ch == "W" or ch == "X" or ch == "Y"
+        or ch == "Z" or ch == "_";
+}
+
+bool is_alnum(string ch) {
+    return is_alpha(ch) or is_digit(ch);
+}
+
+bool is_whitespace(string ch) {
+    return ch == " " or ch == "\t" or ch == "\r" or ch == "\n";
+}
+
+# Lexer state: list(int) of (pos, line, col)
+list(int) new_state() {
+    return (0, 1, 0);
+}
+
+int state_pos(list(int) state) {
+    return state.get(0);
+}
+
+int state_line(list(int) state) {
+    return state.get(1);
+}
+
+int state_col(list(int) state) {
+    return state.get(2);
+}
+
+# Get current character as string, "" if at end
+string current_char(string source, list(int) state) {
+    int pos = state_pos(state);
+    if pos >= source.len() {
+        return "";
+    }
+    return string(source.chars().get(pos));
+}
+
+# Peek one ahead
+string peek_char(string source, list(int) state) {
+    int pos = state_pos(state) + 1;
+    if pos >= source.len() {
+        return "";
+    }
+    return string(source.chars().get(pos));
+}
+
+# Advance state by one character
+list(int) advance(string source, list(int) state) {
+    string ch = current_char(source, state);
+    int pos  = state_pos(state) + 1;
+    int line = state_line(state);
+    int col  = state_col(state) + 1;
+    if ch == "\n" {
+        line = line + 1;
+        col = 0;
+    }
+    return (pos, line, col);
+}
+
+# Skip whitespace
+list(int) skip_whitespace(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_whitespace(ch) {
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    return s;
+}
+
+# Skip comment to end of line
+list(int) skip_comment(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\n" or ch == "" {
+            running = false;
+        } else {
+            s = advance(source, s);
+        }
+    }
+    return s;
+}
+
+# Map identifier string to token kind string
+string keyword_or_ident(string value) {
+    if value == "and"     { return "TokenKind::And"; }
+    if value == "or"      { return "TokenKind::Or"; }
+    if value == "not"     { return "TokenKind::Not"; }
+    if value == "if"      { return "TokenKind::If"; }
+    if value == "else"    { return "TokenKind::Else"; }
+    if value == "for"     { return "TokenKind::For"; }
+    if value == "in"      { return "TokenKind::In"; }
+    if value == "while"   { return "TokenKind::While"; }
+    if value == "match"   { return "TokenKind::Match"; }
+    if value == "return"  { return "TokenKind::Return"; }
+    if value == "break"   { return "TokenKind::Break"; }
+    if value == "true"    { return "TokenKind::True"; }
+    if value == "false"   { return "TokenKind::False"; }
+    if value == "void"    { return "TokenKind::Void"; }
+    if value == "empty"   { return "TokenKind::Empty"; }
+    if value == "none"    { return "TokenKind::None"; }
+    if value == "some"    { return "TokenKind::Some"; }
+    if value == "ok"      { return "TokenKind::Ok"; }
+    if value == "error"   { return "TokenKind::Error"; }
+    if value == "is"      { return "TokenKind::Is"; }
+    if value == "as"      { return "TokenKind::As"; }
+    if value == "use"     { return "TokenKind::Use"; }
+    if value == "module"  { return "TokenKind::Module"; }
+    if value == "struct"  { return "TokenKind::Struct"; }
+    if value == "enum"    { return "TokenKind::Enum"; }
+    if value == "private" { return "TokenKind::Private"; }
+    if value == "const"   { return "TokenKind::Const"; }
+    if value == "mutable" { return "TokenKind::Mutable"; }
+    if value == "affine"  { return "TokenKind::Affine"; }
+    if value == "bare"    { return "TokenKind::Bare"; }
+    if value == "generic" { return "TokenKind::Generic"; }
+    if value == "range"   { return "TokenKind::Range"; }
+    if value == "int"     { return "TokenKind::Int"; }
+    if value == "float"   { return "TokenKind::Float"; }
+    if value == "string"  { return "TokenKind::String"; }
+    if value == "bool"    { return "TokenKind::Bool"; }
+    if value == "char"    { return "TokenKind::Char"; }
+    if value == "list"    { return "TokenKind::List"; }
+    if value == "table"   { return "TokenKind::Table"; }
+    if value == "option"  { return "TokenKind::Option"; }
+    if value == "result"  { return "TokenKind::Result"; }
+    return "TokenKind::Ident";
+}
+
+# Read identifier or keyword
+# Returns list(string): (pos, line, col, kind, value)
+list(string) read_ident(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable string value = "";
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_alnum(ch) {
+            value = value + ch;
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    string kind = keyword_or_ident(value);
+    return (
+        string(state_pos(s)),
+        string(state_line(s)),
+        string(state_col(s)),
+        kind,
+        value
+    );
+}
+
+# Read integer or float literal
+# Returns list(string): (pos, line, col, kind, value)
+list(string) read_number(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable string value = "";
+    mutable string kind = "TokenKind::IntLit";
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_digit(ch) {
+            value = value + ch;
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    if current_char(source, s) == "." and peek_char(source, s) != "." {
+        value = value + ".";
+        s = advance(source, s);
+        mutable bool running_f = true;
+        while running_f {
+            string ch = current_char(source, s);
+            if is_digit(ch) {
+                value = value + ch;
+                s = advance(source, s);
+            } else {
+                running_f = false;
+            }
+        }
+        kind = "TokenKind::FloatLit";
+    }
+    return (
+        string(state_pos(s)),
+        string(state_line(s)),
+        string(state_col(s)),
+        kind,
+        value
+    );
+}
+
+# Read double-quoted string with interpolation
+# Returns flat list of token fields + 3 final state values at end
+# Token fields: kind, value, line, col (groups of 4)
+# Final 3: pos, line, col
+list(string) read_string(string source, list(int) state) {
+    mutable list(int) s = advance(source, state); # skip opening "
+    mutable list(string) results = empty;
+    mutable string current = "";
+    mutable int seg_line = state_line(s);
+    mutable int seg_col  = state_col(s);
+    mutable bool running = true;
+
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\"" or ch == "" {
+            running = false;
+        } else if ch == "&" and peek_char(source, s) == "{" {
+            if current.len() > 0 {
+                results = results.add("TokenKind::StringLit");
+                results = results.add(current);
+                results = results.add(string(seg_line));
+                results = results.add(string(seg_col));
+                current = "";
+            }
+            s = advance(source, s); # skip &
+            s = advance(source, s); # skip {
+            mutable string ident = "";
+            mutable bool reading = true;
+            while reading {
+                string ic = current_char(source, s);
+                if ic == "}" or ic == "" {
+                    reading = false;
+                } else {
+                    ident = ident + ic;
+                    s = advance(source, s);
+                }
+            }
+            s = advance(source, s); # skip }
+            results = results.add("TokenKind::Interp");
+            results = results.add(ident);
+            results = results.add(string(state_line(s)));
+            results = results.add(string(state_col(s)));
+            seg_line = state_line(s);
+            seg_col  = state_col(s);
+        } else if ch == "\\" {
+            s = advance(source, s);
+            string esc = current_char(source, s);
+            s = advance(source, s);
+            if esc == "n"  { current = current + "\n"; }
+            else if esc == "t"  { current = current + "\t"; }
+            else if esc == "\\" { current = current + "\\"; }
+            else if esc == "\"" { current = current + "\""; }
+            else { current = current + "\\" + esc; }
+        } else {
+            if current == "" {
+                seg_line = state_line(s);
+                seg_col  = state_col(s);
+            }
+            current = current + ch;
+            s = advance(source, s);
+        }
+    }
+
+    s = advance(source, s); # skip closing "
+
+    if current.len() > 0 {
+        results = results.add("TokenKind::StringLit");
+        results = results.add(current);
+        results = results.add(string(seg_line));
+        results = results.add(string(seg_col));
+    }
+
+    if results.len() == 0 {
+        results = results.add("TokenKind::StringLit");
+        results = results.add("");
+        results = results.add(string(state_line(state)));
+        results = results.add(string(state_col(state)));
+    }
+
+    # append final state
+    results = results.add(string(state_pos(s)));
+    results = results.add(string(state_line(s)));
+    results = results.add(string(state_col(s)));
+
+    return results;
+}
+
+# Read single-quoted char literal
+# Returns list(string): (pos, line, col, kind, value)
+list(string) read_char_lit(string source, list(int) state) {
+    mutable list(int) s = advance(source, state); # skip opening '
+    string value = current_char(source, s);
+    s = advance(source, s);
+    s = advance(source, s); # skip closing '
+    return (
+        string(state_pos(s)),
+        string(state_line(s)),
+        string(state_col(s)),
+        "TokenKind::CharLit",
+        value
+    );
+}
+
+# Read a symbol token
+# Returns list(string): (pos, line, col, kind, value)
+list(string) read_symbol(string source, list(int) state) {
+    mutable list(int) s = state;
+    string ch = current_char(source, s);
+    s = advance(source, s);
+    string next = current_char(source, s);
+
+    if ch == "+" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::PlusEq",    "+="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Plus",     "+");
+    }
+    if ch == "-" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::MinusEq",   "-="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Minus",    "-");
+    }
+    if ch == "*" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::StarEq",    "*="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Star",     "*");
+    }
+    if ch == "/" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::SlashEq",   "/="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Slash",    "/");
+    }
+    if ch == "%" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Percent",   "%");  }
+    if ch == "=" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Eq",        "=="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Assign",   "=");
+    }
+    if ch == "!" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Neq",       "!="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Illegal",  "!");
+    }
+    if ch == "<" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Lte",       "<="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Lt",       "<");
+    }
+    if ch == ">" {
+        if next == "=" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Gte",       ">="); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Gt",       ">");
+    }
+    if ch == "(" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::LParen",    "(");  }
+    if ch == ")" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::RParen",    ")");  }
+    if ch == "{" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::LBrace",    "{");  }
+    if ch == "}" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::RBrace",    "}");  }
+    if ch == "[" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::LBracket",  "[");  }
+    if ch == "]" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::RBracket",  "]");  }
+    if ch == ";" { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Semicolon", ";");  }
+    if ch == "," { return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Comma",     ",");  }
+    if ch == ":" {
+        if next == ":" { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::ColonColon", "::"); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Colon",    ":");
+    }
+    if ch == "." {
+        if next == "." { s = advance(source, s); return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::DotDot",    ".."); }
+        return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Dot",      ".");
+    }
+    return (string(state_pos(s)), string(state_line(s)), string(state_col(s)), "TokenKind::Illegal", ch);
+}
+
+# Token helpers — treat flat list(string) as tokens
+# Each token is 4 consecutive elements: kind, value, line, col
+
+int token_count(list(string) tokens) {
+    return tokens.len() / 4;
+}
+
+string token_kind(list(string) tokens, int i) {
+    return tokens.get(i * 4);
+}
+
+string token_value(list(string) tokens, int i) {
+    return tokens.get(i * 4 + 1);
+}
+
+string token_line(list(string) tokens, int i) {
+    return tokens.get(i * 4 + 2);
+}
+
+string token_col(list(string) tokens, int i) {
+    return tokens.get(i * 4 + 3);
+}
+
+# Main tokenize entry point
+# Returns flat list(string) — every 4 elements = one token: kind, value, line, col
+list(string) tokenize(string source) {
+    mutable list(int) s = new_state();
+    mutable list(string) tokens = empty;
+    mutable bool running = true;
+
+    while running {
+        s = skip_whitespace(source, s);
+        string ch = current_char(source, s);
+
+        if ch == "" {
+            tokens = tokens.add("TokenKind::Eof");
+            tokens = tokens.add("");
+            tokens = tokens.add(string(state_line(s)));
+            tokens = tokens.add(string(state_col(s)));
+            running = false;
+        } else if ch == "#" {
+            s = skip_comment(source, s);
+        } else if ch == "\"" {
+            list(string) result = read_string(source, s);
+            int total = result.len();
+            int token_count = (total - 3) / 4;
+            mutable int i = 0;
+            while i < token_count {
+                int base = i * 4;
+                tokens = tokens.add(result.get(base));
+                tokens = tokens.add(result.get(base + 1));
+                tokens = tokens.add(result.get(base + 2));
+                tokens = tokens.add(result.get(base + 3));
+                i += 1;
+            }
+            s = (int(result.get(total - 3)), int(result.get(total - 2)), int(result.get(total - 1)));
+        } else if ch == "'" {
+            list(string) result = read_char_lit(source, s);
+            tokens = tokens.add(result.get(3));
+            tokens = tokens.add(result.get(4));
+            tokens = tokens.add(result.get(1));
+            tokens = tokens.add(result.get(2));
+            s = (int(result.get(0)), int(result.get(1)), int(result.get(2)));
+        } else if is_digit(ch) {
+            list(string) result = read_number(source, s);
+            tokens = tokens.add(result.get(3));
+            tokens = tokens.add(result.get(4));
+            tokens = tokens.add(result.get(1));
+            tokens = tokens.add(result.get(2));
+            s = (int(result.get(0)), int(result.get(1)), int(result.get(2)));
+        } else if is_alpha(ch) {
+            list(string) result = read_ident(source, s);
+            tokens = tokens.add(result.get(3));
+            tokens = tokens.add(result.get(4));
+            tokens = tokens.add(result.get(1));
+            tokens = tokens.add(result.get(2));
+            s = (int(result.get(0)), int(result.get(1)), int(result.get(2)));
+        } else {
+            list(string) result = read_symbol(source, s);
+            tokens = tokens.add(result.get(3));
+            tokens = tokens.add(result.get(4));
+            tokens = tokens.add(result.get(1));
+            tokens = tokens.add(result.get(2));
+            s = (int(result.get(0)), int(result.get(1)), int(result.get(2)));
+        }
+    }
+
+    return tokens;
+}
