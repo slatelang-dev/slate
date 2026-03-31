@@ -1,0 +1,70 @@
+module node;
+
+enum NodeKind {
+    # Program root
+    Program,
+
+    # Declarations
+    FnDecl,
+    StructDecl,
+    EnumDecl,
+    Param,
+    Field,
+    Variant,
+    Use,
+    Module,
+
+    # Statements
+    VarDecl,
+    ConstDecl,
+    MutableDecl,
+    AffineDecl,
+    Assign,
+    AssignOp,
+    Return,
+    Break,
+    If,
+    While,
+    For,
+    ForIn,
+    Match,
+    MatchArm,
+    Block,
+
+    # Expressions
+    Ident,
+    IntLit,
+    FloatLit,
+    StringLit,
+    CharLit,
+    BoolLit,
+    BinaryOp,
+    UnaryOp,
+    Call,
+    MethodCall,
+    FieldAccess,
+    Some,
+    Ok,
+    Error,
+    None,
+    Empty,
+    Is,
+    Interp,
+
+    # Types
+    TypeName,
+    TypeOption,
+    TypeResult,
+    TypeList,
+    TypeTable,
+    TypeGeneric,
+    TypeVoid,
+}
+
+struct Node {
+    NodeKind kind;
+    string value;
+    int line;
+    int col;
+    list(Node) children;
+}

@@ -1,0 +1,119 @@
+module tokenize;
+
+use token;
+use chars;
+use reader;
+use core;
+
+# Read string with interpolation — returns list(Token)
+
+list(Token) read_string(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    mutable list(Token) results = empty;
+    mutable string current = "";
+    mutable int seg_line = state_line(s);
+    mutable int seg_col  = state_col(s);
+    mutable bool running = true;
+
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\"" or ch == "" {
+            running = false;
+        } else if ch == "&" and peek_char(source, s) == "{" {
+            if current.len() > 0 {
+                results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
+                current = "";
+            }
+            s = advance(source, s);
+            s = advance(source, s);
+            mutable string ident = "";
+            mutable bool reading = true;
+            while reading {
+                string ic = current_char(source, s);
+                if ic == "}" or ic == "" {
+                    reading = false;
+                } else {
+                    ident = ident + ic;
+                    s = advance(source, s);
+                }
+            }
+            s = advance(source, s);
+            results = results.add(Token(kind: TokenKind.Interp, value: ident, line: state_line(s), col: state_col(s)));
+            seg_line = state_line(s);
+            seg_col  = state_col(s);
+        } else if ch == "\\" {
+            s = advance(source, s);
+            string esc = current_char(source, s);
+            s = advance(source, s);
+            if esc == "n"  { current = current + "\n"; }
+            else if esc == "t"  { current = current + "\t"; }
+            else if esc == "\\" { current = current + "\\"; }
+            else if esc == "\"" { current = current + "\""; }
+            else { current = current + "\\" + esc; }
+        } else {
+            if current == "" {
+                seg_line = state_line(s);
+                seg_col  = state_col(s);
+            }
+            current = current + ch;
+            s = advance(source, s);
+        }
+    }
+
+    s = advance(source, s);
+
+    if current.len() > 0 {
+        results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
+    }
+    if results.len() == 0 {
+        results = results.add(Token(kind: TokenKind.StringLit, value: "", line: state_line(state), col: state_col(state)));
+    }
+
+    return results;
+}
+
+# Main tokenize entry point
+
+list(Token) tokenize(string source) {
+    mutable list(int) s = new_state();
+    mutable list(Token) tokens = empty;
+    mutable bool running = true;
+
+    while running {
+        s = skip_whitespace(source, s);
+        string ch = current_char(source, s);
+
+        if ch == "" {
+            tokens = tokens.add(Token(kind: TokenKind.Eof, value: "", line: state_line(s), col: state_col(s)));
+            running = false;
+        } else if ch == "#" {
+            s = skip_comment(source, s);
+        } else if ch == "\"" {
+            list(Token) string_tokens = read_string(source, s);
+            mutable int i = 0;
+            while i < string_tokens.len() {
+                tokens = tokens.add(string_tokens.get(i));
+                i += 1;
+            }
+            s = string_end_state(source, s);
+        } else if ch == "'" {
+            Token t = read_char_lit(source, s);
+            tokens = tokens.add(t);
+            s = advance_past_char_lit(source, s);
+        } else if is_digit(ch) {
+            Token t = read_number(source, s);
+            tokens = tokens.add(t);
+            s = advance_past_number(source, s);
+        } else if is_alpha(ch) {
+            Token t = read_ident(source, s);
+            tokens = tokens.add(t);
+            s = advance_past_ident(source, s);
+        } else {
+            Token t = read_symbol(source, s);
+            tokens = tokens.add(t);
+            s = advance_past_symbol(source, s, t.value);
+        }
+    }
+
+    return tokens;
+}

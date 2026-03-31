@@ -29,7 +29,7 @@ enum TokenKind {
     Assign, PlusEq, MinusEq, StarEq, SlashEq,
     # Delimiters
     LParen, RParen, LBrace, RBrace, LBracket, RBracket,
-    Semicolon, Comma, Colon, ColonColon, Dot, DotDot,
+    Semicolon, Comma, Colon, Dot, DotDot,
     # Special
     Eof, Illegal,
 }

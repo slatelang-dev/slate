@@ -1,0 +1,110 @@
+module state;
+
+use token;
+use node;
+
+# ParseResult — returned by every parse function
+# ok: true = success, false = failure
+# error: message on failure, "" on success
+# pos: token position after parsing
+
+struct ParseResult {
+    Node node;
+    int pos;
+    bool ok;
+    string error;
+}
+
+# Constructors
+
+ParseResult parse_ok(Node node, int pos) {
+    return ParseResult(node: node, pos: pos, ok: true, error: "");
+}
+
+ParseResult parse_err(string error, int pos) {
+    Node empty_node = Node(kind: NodeKind.Program, value: "", line: 0, col: 0, children: empty);
+    return ParseResult(node: empty_node, pos: pos, ok: false, error: error);
+}
+
+# Token access helpers — thin wrappers so parser functions stay readable
+
+TokenKind current_kind(list(Token) tokens, int pos) {
+    return tokens.get(pos).kind;
+}
+
+string current_value(list(Token) tokens, int pos) {
+    return tokens.get(pos).value;
+}
+
+int current_line(list(Token) tokens, int pos) {
+    return tokens.get(pos).line;
+}
+
+int current_col(list(Token) tokens, int pos) {
+    return tokens.get(pos).col;
+}
+
+bool at_end(list(Token) tokens, int pos) {
+    return tokens.get(pos).kind == TokenKind.Eof;
+}
+
+bool check(list(Token) tokens, int pos, TokenKind kind) {
+    return tokens.get(pos).kind == kind;
+}
+
+# Advance past current token
+
+int advance_past(int pos) {
+    return pos + 1;
+}
+
+# Expect a specific token kind — returns new pos on success, -1 on failure
+# Caller checks for -1 and returns parse_err
+
+int expect(list(Token) tokens, int pos, TokenKind kind) {
+    if tokens.get(pos).kind == kind {
+        return pos + 1;
+    }
+    return -1;
+}
+
+# Expect helpers for common tokens
+
+int expect_semicolon(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.Semicolon);
+}
+
+int expect_lparen(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.LParen);
+}
+
+int expect_rparen(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.RParen);
+}
+
+int expect_lbrace(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.LBrace);
+}
+
+int expect_rbrace(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.RBrace);
+}
+
+int expect_assign(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.Assign);
+}
+
+int expect_colon(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.Colon);
+}
+
+int expect_comma(list(Token) tokens, int pos) {
+    return expect(tokens, pos, TokenKind.Comma);
+}
+
+# Build a descriptive expect error message
+
+string expect_error(string expected, list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+    return "expected " + expected + " but got '" + t.value + "' at line " + string(t.line) + " col " + string(t.col);
+}

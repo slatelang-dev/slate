@@ -1,4 +1,7 @@
 module lexer;
 
-use lexer;
 use token;
+use chars;
+use reader;
+use core;
+use tokenize;

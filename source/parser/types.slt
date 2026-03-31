@@ -1,0 +1,107 @@
+module types;
+
+use token;
+use node;
+use state;
+
+ParseResult parse_type(list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+    int line = t.line;
+    int col = t.col;
+
+    if t.kind == TokenKind.Void {
+        return parse_ok(make_type_void(line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Generic {
+        return parse_ok(make_type_generic(line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Int {
+        return parse_ok(make_type("int", line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Float {
+        return parse_ok(make_type("float", line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.String {
+        return parse_ok(make_type("string", line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Bool {
+        return parse_ok(make_type("bool", line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Char {
+        return parse_ok(make_type("char", line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Option {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after option", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_type(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after option type", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_type_option(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.Result {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after result", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_type(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after result type", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_type_result(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.List {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after list", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_type(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after list type", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_type_list(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.Table {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after table", tokens, pos + 1), pos);
+        }
+        ParseResult key = parse_type(tokens, after_lparen);
+        if key.ok == false { return key; }
+        int after_comma = expect_comma(tokens, key.pos);
+        if after_comma == -1 {
+            return parse_err(expect_error(", in table type", tokens, key.pos), key.pos);
+        }
+        ParseResult val = parse_type(tokens, after_comma);
+        if val.ok == false { return val; }
+        int after_rparen = expect_rparen(tokens, val.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after table type", tokens, val.pos), val.pos);
+        }
+        return parse_ok(make_type_table(key.node, val.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.Ident {
+        return parse_ok(make_type(t.value, line, col), pos + 1);
+    }
+
+    return parse_err(expect_error("type", tokens, pos), pos);
+}

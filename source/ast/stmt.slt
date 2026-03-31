@@ -1,0 +1,196 @@
+module stmt;
+
+use node;
+
+# Type node constructors
+# value carries the type name for simple types, inner type for parameterized types
+
+Node make_type(string name, int line, int col) {
+    return Node(kind: NodeKind.TypeName, value: name, line: line, col: col, children: empty);
+}
+
+Node make_type_option(Node inner, int line, int col) {
+    return Node(kind: NodeKind.TypeOption, value: "", line: line, col: col, children: (inner,));
+}
+
+Node make_type_result(Node inner, int line, int col) {
+    return Node(kind: NodeKind.TypeResult, value: "", line: line, col: col, children: (inner,));
+}
+
+Node make_type_list(Node inner, int line, int col) {
+    return Node(kind: NodeKind.TypeList, value: "", line: line, col: col, children: (inner,));
+}
+
+Node make_type_table(Node key, Node val, int line, int col) {
+    return Node(kind: NodeKind.TypeTable, value: "", line: line, col: col, children: (key, val));
+}
+
+Node make_type_void(int line, int col) {
+    return Node(kind: NodeKind.TypeVoid, value: "void", line: line, col: col, children: empty);
+}
+
+Node make_type_generic(int line, int col) {
+    return Node(kind: NodeKind.TypeGeneric, value: "generic", line: line, col: col, children: empty);
+}
+
+# Statement node constructors
+
+# Variable declarations — value is variable name, child 0 is type, child 1 is init expr
+# VarDecl = immutable (default), MutableDecl = mutable, ConstDecl = const, AffineDecl = affine
+
+Node make_var_decl(string name, Node type_node, Node init, int line, int col) {
+    return Node(kind: NodeKind.VarDecl, value: name, line: line, col: col, children: (type_node, init));
+}
+
+Node make_mutable_decl(string name, Node type_node, Node init, int line, int col) {
+    return Node(kind: NodeKind.MutableDecl, value: name, line: line, col: col, children: (type_node, init));
+}
+
+Node make_const_decl(string name, Node type_node, Node init, int line, int col) {
+    return Node(kind: NodeKind.ConstDecl, value: name, line: line, col: col, children: (type_node, init));
+}
+
+Node make_affine_decl(string name, Node type_node, Node init, int line, int col) {
+    return Node(kind: NodeKind.AffineDecl, value: name, line: line, col: col, children: (type_node, init));
+}
+
+# Assignment — value is variable name, child is value expr
+
+Node make_assign(string name, Node val, int line, int col) {
+    return Node(kind: NodeKind.Assign, value: name, line: line, col: col, children: (val,));
+}
+
+# AssignOp — value is "name op" e.g. "x +", child is value expr
+
+Node make_assign_op(string name, string op, Node val, int line, int col) {
+    return Node(kind: NodeKind.AssignOp, value: name + " " + op, line: line, col: col, children: (val,));
+}
+
+# Return — child is return expr (empty children = bare return)
+
+Node make_return(list(Node) children, int line, int col) {
+    return Node(kind: NodeKind.Return, value: "", line: line, col: col, children: children);
+}
+
+Node make_break(int line, int col) {
+    return Node(kind: NodeKind.Break, value: "", line: line, col: col, children: empty);
+}
+
+# If — children: (condition, then_block, optional else_block)
+
+Node make_if(Node condition, Node then_block, list(Node) else_children, int line, int col) {
+    mutable list(Node) children = (condition, then_block);
+    mutable int i = 0;
+    while i < else_children.len() {
+        children = children.add(else_children.get(i));
+        i += 1;
+    }
+    return Node(kind: NodeKind.If, value: "", line: line, col: col, children: children);
+}
+
+# While — children: (condition, body_block)
+
+Node make_while(Node condition, Node body, int line, int col) {
+    return Node(kind: NodeKind.While, value: "", line: line, col: col, children: (condition, body));
+}
+
+# For — value is loop var name, children: (start_expr, end_expr, body_block)
+
+Node make_for(string var, Node start, Node end, Node body, int line, int col) {
+    return Node(kind: NodeKind.For, value: var, line: line, col: col, children: (start, end, body));
+}
+
+# ForIn — value is loop var name, children: (iterable_expr, body_block)
+
+Node make_for_in(string var, Node iterable, Node body, int line, int col) {
+    return Node(kind: NodeKind.ForIn, value: var, line: line, col: col, children: (iterable, body));
+}
+
+# Block — children are the statements
+
+Node make_block(list(Node) stmts, int line, int col) {
+    return Node(kind: NodeKind.Block, value: "", line: line, col: col, children: stmts);
+}
+
+# Match — child 0 is the value being matched, rest are MatchArm nodes
+
+Node make_match(Node val, list(Node) arms, int line, int col) {
+    mutable list(Node) children = (val,);
+    mutable int i = 0;
+    while i < arms.len() {
+        children = children.add(arms.get(i));
+        i += 1;
+    }
+    return Node(kind: NodeKind.Match, value: "", line: line, col: col, children: children);
+}
+
+# MatchArm — value is pattern kind ("int", "string", "range", "else", "some", "none", "ok", "error")
+# children: (pattern_expr_or_empty, body_block)
+
+Node make_match_arm(string pattern_kind, list(Node) arm_children, int line, int col) {
+    return Node(kind: NodeKind.MatchArm, value: pattern_kind, line: line, col: col, children: arm_children);
+}
+
+# Declarations
+
+# Param — value is param name, child 0 is type node
+
+Node make_param(string name, Node type_node, int line, int col) {
+    return Node(kind: NodeKind.Param, value: name, line: line, col: col, children: (type_node,));
+}
+
+# Field — value is field name, child 0 is type node
+
+Node make_field(string name, Node type_node, int line, int col) {
+    return Node(kind: NodeKind.Field, value: name, line: line, col: col, children: (type_node,));
+}
+
+# Variant — value is variant name, children are payload type nodes (empty = no payload)
+
+Node make_variant(string name, list(Node) payload, int line, int col) {
+    return Node(kind: NodeKind.Variant, value: name, line: line, col: col, children: payload);
+}
+
+# FnDecl — value is function name, child 0 is return type, rest are params then body block
+# The body block is always the last child
+
+Node make_fn_decl(string name, Node return_type, list(Node) params, Node body, int line, int col) {
+    mutable list(Node) children = (return_type,);
+    mutable int i = 0;
+    while i < params.len() {
+        children = children.add(params.get(i));
+        i += 1;
+    }
+    children = children.add(body);
+    return Node(kind: NodeKind.FnDecl, value: name, line: line, col: col, children: children);
+}
+
+# StructDecl — value is struct name, children are Field and FnDecl nodes
+
+Node make_struct_decl(string name, list(Node) members, int line, int col) {
+    return Node(kind: NodeKind.StructDecl, value: name, line: line, col: col, children: members);
+}
+
+# EnumDecl — value is enum name, children are Variant nodes
+
+Node make_enum_decl(string name, list(Node) variants, int line, int col) {
+    return Node(kind: NodeKind.EnumDecl, value: name, line: line, col: col, children: variants);
+}
+
+# Use — value is module name
+
+Node make_use(string name, int line, int col) {
+    return Node(kind: NodeKind.Use, value: name, line: line, col: col, children: empty);
+}
+
+# Module — value is module name
+
+Node make_module(string name, int line, int col) {
+    return Node(kind: NodeKind.Module, value: name, line: line, col: col, children: empty);
+}
+
+# Program — children are all top-level declarations
+
+Node make_program(list(Node) decls, int line, int col) {
+    return Node(kind: NodeKind.Program, value: "", line: line, col: col, children: decls);
+}

@@ -1,0 +1,367 @@
+module parser_expr;
+
+use token;
+use node;
+use state;
+
+ParseResult parse_primary(list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+    int line = t.line;
+    int col = t.col;
+
+    if t.kind == TokenKind.IntLit {
+        return parse_ok(make_int_lit(t.value, line, col), pos + 1);
+    }
+    if t.kind == TokenKind.FloatLit {
+        return parse_ok(make_float_lit(t.value, line, col), pos + 1);
+    }
+    if t.kind == TokenKind.StringLit {
+        return parse_ok(make_string_lit(t.value, line, col), pos + 1);
+    }
+    if t.kind == TokenKind.CharLit {
+        return parse_ok(make_char_lit(t.value, line, col), pos + 1);
+    }
+    if t.kind == TokenKind.Interp {
+        return parse_ok(make_interp(t.value, line, col), pos + 1);
+    }
+    if t.kind == TokenKind.True {
+        return parse_ok(make_bool_lit("true", line, col), pos + 1);
+    }
+    if t.kind == TokenKind.False {
+        return parse_ok(make_bool_lit("false", line, col), pos + 1);
+    }
+    if t.kind == TokenKind.None {
+        return parse_ok(make_none(line, col), pos + 1);
+    }
+    if t.kind == TokenKind.Empty {
+        return parse_ok(make_empty(line, col), pos + 1);
+    }
+
+    if t.kind == TokenKind.Some {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after some", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_expr(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after some argument", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_some(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.Ok {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after ok", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_expr(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after ok argument", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_ok(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.Error {
+        int after_lparen = expect_lparen(tokens, pos + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after error", tokens, pos + 1), pos);
+        }
+        ParseResult inner = parse_expr(tokens, after_lparen);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after error argument", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(make_error(inner.node, line, col), after_rparen);
+    }
+
+    if t.kind == TokenKind.LParen {
+        ParseResult inner = parse_expr(tokens, pos + 1);
+        if inner.ok == false { return inner; }
+        int after_rparen = expect_rparen(tokens, inner.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(")", tokens, inner.pos), inner.pos);
+        }
+        return parse_ok(inner.node, after_rparen);
+    }
+
+    if t.kind == TokenKind.Ident {
+        if check(tokens, pos + 1, TokenKind.LParen) {
+            return parse_call(tokens, pos);
+        }
+        return parse_ok(make_ident(t.value, line, col), pos + 1);
+    }
+
+    return parse_err(expect_error("expression", tokens, pos), pos);
+}
+
+ParseResult parse_args(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    int after_lparen = expect_lparen(tokens, pos);
+    if after_lparen == -1 {
+        return parse_err(expect_error("(", tokens, pos), pos);
+    }
+    mutable list(Node) args = empty;
+    mutable int cur = after_lparen;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.RParen) {
+            running = false;
+        } else {
+            ParseResult arg = parse_expr(tokens, cur);
+            if arg.ok == false { return arg; }
+            args = args.add(arg.node);
+            cur = arg.pos;
+            if check(tokens, cur, TokenKind.Comma) {
+                cur = cur + 1;
+            } else {
+                running = false;
+            }
+        }
+    }
+    int after_rparen = expect_rparen(tokens, cur);
+    if after_rparen == -1 {
+        return parse_err(expect_error(")", tokens, cur), cur);
+    }
+    return parse_ok(make_block(args, line, col), after_rparen);
+}
+
+ParseResult parse_call(list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+    string name = t.value;
+    int line = t.line;
+    int col = t.col;
+    ParseResult args_result = parse_args(tokens, pos + 1);
+    if args_result.ok == false { return args_result; }
+    return parse_ok(make_call(name, args_result.node.children, line, col), args_result.pos);
+}
+
+ParseResult parse_postfix(list(Token) tokens, int pos) {
+    ParseResult result = parse_primary(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.Dot) {
+            Token member_tok = tokens.get(cur + 1);
+            int line = member_tok.line;
+            int col = member_tok.col;
+            if member_tok.kind != TokenKind.Ident {
+                return parse_err(expect_error("field or method name after .", tokens, cur + 1), cur + 1);
+            }
+            string member = member_tok.value;
+            if check(tokens, cur + 1 + 1, TokenKind.LParen) {
+                ParseResult args_result = parse_args(tokens, cur + 1 + 1);
+                if args_result.ok == false { return args_result; }
+                node = make_method_call(member, node, args_result.node.children, line, col);
+                cur = args_result.pos;
+            } else {
+                node = make_field_access(member, node, line, col);
+                cur = cur + 1 + 1;
+            }
+        } else if check(tokens, cur, TokenKind.Is) {
+            Token type_tok = tokens.get(cur + 1);
+            int line = type_tok.line;
+            int col = type_tok.col;
+            node = make_is(node, type_tok.value, line, col);
+            cur = cur + 1 + 1;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_unary(list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+    int line = t.line;
+    int col = t.col;
+    if t.kind == TokenKind.Not {
+        ParseResult operand = parse_unary(tokens, pos + 1);
+        if operand.ok == false { return operand; }
+        return parse_ok(make_unary_op("not", operand.node, line, col), operand.pos);
+    }
+    if t.kind == TokenKind.Minus {
+        ParseResult operand = parse_unary(tokens, pos + 1);
+        if operand.ok == false { return operand; }
+        return parse_ok(make_unary_op("-", operand.node, line, col), operand.pos);
+    }
+    return parse_postfix(tokens, pos);
+}
+
+ParseResult parse_multiplication(list(Token) tokens, int pos) {
+    ParseResult result = parse_unary(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.Star {
+            ParseResult right = parse_unary(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("*", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Slash {
+            ParseResult right = parse_unary(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("/", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Percent {
+            ParseResult right = parse_unary(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("%", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_addition(list(Token) tokens, int pos) {
+    ParseResult result = parse_multiplication(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.Plus {
+            ParseResult right = parse_multiplication(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("+", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Minus {
+            ParseResult right = parse_multiplication(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("-", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_comparison(list(Token) tokens, int pos) {
+    ParseResult result = parse_addition(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.Lt {
+            ParseResult right = parse_addition(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("<", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Gt {
+            ParseResult right = parse_addition(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op(">", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Lte {
+            ParseResult right = parse_addition(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("<=", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Gte {
+            ParseResult right = parse_addition(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op(">=", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_equality(list(Token) tokens, int pos) {
+    ParseResult result = parse_comparison(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.Eq {
+            ParseResult right = parse_comparison(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("==", node, right.node, line, col);
+            cur = right.pos;
+        } else if t.kind == TokenKind.Neq {
+            ParseResult right = parse_comparison(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("!=", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_and(list(Token) tokens, int pos) {
+    ParseResult result = parse_equality(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.And {
+            ParseResult right = parse_equality(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("and", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_or(list(Token) tokens, int pos) {
+    ParseResult result = parse_and(tokens, pos);
+    if result.ok == false { return result; }
+    mutable Node node = result.node;
+    mutable int cur = result.pos;
+    mutable bool running = true;
+    while running {
+        Token t = tokens.get(cur);
+        int line = t.line;
+        int col = t.col;
+        if t.kind == TokenKind.Or {
+            ParseResult right = parse_and(tokens, cur + 1);
+            if right.ok == false { return right; }
+            node = make_binary_op("or", node, right.node, line, col);
+            cur = right.pos;
+        } else {
+            running = false;
+        }
+    }
+    return parse_ok(node, cur);
+}
+
+ParseResult parse_expr(list(Token) tokens, int pos) {
+    return parse_or(tokens, pos);
+}

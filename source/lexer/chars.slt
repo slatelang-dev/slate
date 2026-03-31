@@ -1,0 +1,104 @@
+module chars;
+
+# Character classification
+
+bool is_digit(string ch) {
+    return ch == "0" or ch == "1" or ch == "2" or ch == "3" or ch == "4"
+        or ch == "5" or ch == "6" or ch == "7" or ch == "8" or ch == "9";
+}
+
+bool is_alpha(string ch) {
+    return ch == "_" or is_alnum(ch);
+}
+
+bool is_alnum(string ch) {
+    return is_digit(ch) or ch == "a" or ch == "b" or ch == "c" or ch == "d"
+        or ch == "e" or ch == "f" or ch == "g" or ch == "h" or ch == "i"
+        or ch == "j" or ch == "k" or ch == "l" or ch == "m" or ch == "n"
+        or ch == "o" or ch == "p" or ch == "q" or ch == "r" or ch == "s"
+        or ch == "t" or ch == "u" or ch == "v" or ch == "w" or ch == "x"
+        or ch == "y" or ch == "z" or ch == "A" or ch == "B" or ch == "C"
+        or ch == "D" or ch == "E" or ch == "F" or ch == "G" or ch == "H"
+        or ch == "I" or ch == "J" or ch == "K" or ch == "L" or ch == "M"
+        or ch == "N" or ch == "O" or ch == "P" or ch == "Q" or ch == "R"
+        or ch == "S" or ch == "T" or ch == "U" or ch == "V" or ch == "W"
+        or ch == "X" or ch == "Y" or ch == "Z" or ch == "_";
+}
+
+bool is_whitespace(string ch) {
+    return ch == " " or ch == "\t" or ch == "\r" or ch == "\n";
+}
+
+# Lexer state: list(int) of (pos, line, col)
+
+list(int) new_state() {
+    return (0, 1, 0);
+}
+
+int state_pos(list(int) state) {
+    return state.get(0);
+}
+
+int state_line(list(int) state) {
+    return state.get(1);
+}
+
+int state_col(list(int) state) {
+    return state.get(2);
+}
+
+string current_char(string source, list(int) state) {
+    int pos = state_pos(state);
+    if pos >= source.len() {
+        return "";
+    }
+    return string(source.chars().get(pos));
+}
+
+string peek_char(string source, list(int) state) {
+    int pos = state_pos(state) + 1;
+    if pos >= source.len() {
+        return "";
+    }
+    return string(source.chars().get(pos));
+}
+
+list(int) advance(string source, list(int) state) {
+    string ch = current_char(source, state);
+    int pos  = state_pos(state) + 1;
+    mutable int line = state_line(state);
+    mutable int col  = state_col(state) + 1;
+    if ch == "\n" {
+        line = line + 1;
+        col = 0;
+    }
+    return (pos, line, col);
+}
+
+list(int) skip_whitespace(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_whitespace(ch) {
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    return s;
+}
+
+list(int) skip_comment(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\n" or ch == "" {
+            running = false;
+        } else {
+            s = advance(source, s);
+        }
+    }
+    return s;
+}

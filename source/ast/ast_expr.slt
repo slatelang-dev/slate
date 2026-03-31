@@ -1,0 +1,102 @@
+module ast_expr;
+
+use node;
+
+# Expression node constructors
+# value carries: operator for BinaryOp/UnaryOp, name for Ident/Call, literal text for literals
+
+Node make_ident(string name, int line, int col) {
+    return Node(kind: NodeKind.Ident, value: name, line: line, col: col, children: empty);
+}
+
+Node make_int_lit(string value, int line, int col) {
+    return Node(kind: NodeKind.IntLit, value: value, line: line, col: col, children: empty);
+}
+
+Node make_float_lit(string value, int line, int col) {
+    return Node(kind: NodeKind.FloatLit, value: value, line: line, col: col, children: empty);
+}
+
+Node make_string_lit(string value, int line, int col) {
+    return Node(kind: NodeKind.StringLit, value: value, line: line, col: col, children: empty);
+}
+
+Node make_char_lit(string value, int line, int col) {
+    return Node(kind: NodeKind.CharLit, value: value, line: line, col: col, children: empty);
+}
+
+Node make_bool_lit(string value, int line, int col) {
+    return Node(kind: NodeKind.BoolLit, value: value, line: line, col: col, children: empty);
+}
+
+Node make_interp(string name, int line, int col) {
+    return Node(kind: NodeKind.Interp, value: name, line: line, col: col, children: empty);
+}
+
+# BinaryOp — value is the operator string e.g. "+", "==", "and"
+# children: (left, right)
+
+Node make_binary_op(string op, Node left, Node right, int line, int col) {
+    return Node(kind: NodeKind.BinaryOp, value: op, line: line, col: col, children: (left, right));
+}
+
+# UnaryOp — value is the operator string e.g. "not", "-"
+# children: (operand)
+
+Node make_unary_op(string op, Node operand, int line, int col) {
+    return Node(kind: NodeKind.UnaryOp, value: op, line: line, col: col, children: (operand,));
+}
+
+# Call — value is function name, children are arguments
+
+Node make_call(string name, list(Node) args, int line, int col) {
+    return Node(kind: NodeKind.Call, value: name, line: line, col: col, children: args);
+}
+
+# MethodCall — value is method name, first child is receiver, rest are arguments
+
+Node make_method_call(string method, Node receiver, list(Node) args, int line, int col) {
+    mutable list(Node) children = (receiver,);
+    mutable int i = 0;
+    while i < args.len() {
+        children = children.add(args.get(i));
+        i += 1;
+    }
+    return Node(kind: NodeKind.MethodCall, value: method, line: line, col: col, children: children);
+}
+
+# FieldAccess — value is field name, child is receiver
+
+Node make_field_access(string field, Node receiver, int line, int col) {
+    return Node(kind: NodeKind.FieldAccess, value: field, line: line, col: col, children: (receiver,));
+}
+
+# option/result wrappers — child is the inner expression
+
+Node make_some(Node inner, int line, int col) {
+    return Node(kind: NodeKind.Some, value: "", line: line, col: col, children: (inner,));
+}
+
+Node make_ok(Node inner, int line, int col) {
+    return Node(kind: NodeKind.Ok, value: "", line: line, col: col, children: (inner,));
+}
+
+Node make_error(Node inner, int line, int col) {
+    return Node(kind: NodeKind.Error, value: "", line: line, col: col, children: (inner,));
+}
+
+# Bare none/empty — no children
+
+Node make_none(int line, int col) {
+    return Node(kind: NodeKind.None, value: "", line: line, col: col, children: empty);
+}
+
+Node make_empty(int line, int col) {
+    return Node(kind: NodeKind.Empty, value: "", line: line, col: col, children: empty);
+}
+
+# Is — value is the type name being checked, child is the expression
+
+Node make_is(Node expr, string type_name, int line, int col) {
+    return Node(kind: NodeKind.Is, value: type_name, line: line, col: col, children: (expr,));
+}

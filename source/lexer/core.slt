@@ -1,0 +1,112 @@
+module core;
+
+use token;
+use chars;
+use reader;
+
+# Token list helpers
+
+int token_count(list(Token) tokens) {
+    return tokens.len();
+}
+
+Token token_at(list(Token) tokens, int i) {
+    return tokens.get(i);
+}
+
+string token_kind(list(Token) tokens, int i) {
+    return tokens.get(i).kind;
+}
+
+string token_value(list(Token) tokens, int i) {
+    return tokens.get(i).value;
+}
+
+int token_line(list(Token) tokens, int i) {
+    return tokens.get(i).line;
+}
+
+int token_col(list(Token) tokens, int i) {
+    return tokens.get(i).col;
+}
+
+bool token_is(list(Token) tokens, int i, string kind) {
+    return tokens.get(i).kind == kind;
+}
+
+# State advancement helpers — only list(int), no list(Token) in this file
+
+list(int) advance_past_ident(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_alnum(ch) {
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    return s;
+}
+
+list(int) advance_past_number(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_digit(ch) {
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    if current_char(source, s) == "." and peek_char(source, s) != "." {
+        s = advance(source, s);
+        mutable bool running_f = true;
+        while running_f {
+            string ch = current_char(source, s);
+            if is_digit(ch) {
+                s = advance(source, s);
+            } else {
+                running_f = false;
+            }
+        }
+    }
+    return s;
+}
+
+list(int) advance_past_char_lit(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    s = advance(source, s);
+    s = advance(source, s);
+    return s;
+}
+
+list(int) advance_past_symbol(string source, list(int) state, string sym) {
+    mutable list(int) s = advance(source, state);
+    if sym == "+=" or sym == "-=" or sym == "*=" or sym == "/="
+    or sym == "==" or sym == "!=" or sym == "<=" or sym == ">="
+    or sym == ".." {
+        s = advance(source, s);
+    }
+    return s;
+}
+
+list(int) string_end_state(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\"" or ch == "" {
+            running = false;
+        } else if ch == "\\" {
+            s = advance(source, s);
+            s = advance(source, s);
+        } else {
+            s = advance(source, s);
+        }
+    }
+    s = advance(source, s);
+    return s;
+}

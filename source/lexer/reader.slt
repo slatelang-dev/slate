@@ -1,0 +1,265 @@
+module reader;
+
+use token;
+use chars;
+
+# Map identifier string to TokenKind
+
+TokenKind keyword_or_ident(string value) {
+    if value == "and"     { return TokenKind.And; }
+    if value == "or"      { return TokenKind.Or; }
+    if value == "not"     { return TokenKind.Not; }
+    if value == "if"      { return TokenKind.If; }
+    if value == "else"    { return TokenKind.Else; }
+    if value == "for"     { return TokenKind.For; }
+    if value == "in"      { return TokenKind.In; }
+    if value == "while"   { return TokenKind.While; }
+    if value == "match"   { return TokenKind.Match; }
+    if value == "return"  { return TokenKind.Return; }
+    if value == "break"   { return TokenKind.Break; }
+    if value == "true"    { return TokenKind.True; }
+    if value == "false"   { return TokenKind.False; }
+    if value == "void"    { return TokenKind.Void; }
+    if value == "empty"   { return TokenKind.Empty; }
+    if value == "none"    { return TokenKind.None; }
+    if value == "some"    { return TokenKind.Some; }
+    if value == "ok"      { return TokenKind.Ok; }
+    if value == "error"   { return TokenKind.Error; }
+    if value == "is"      { return TokenKind.Is; }
+    if value == "as"      { return TokenKind.As; }
+    if value == "use"     { return TokenKind.Use; }
+    if value == "module"  { return TokenKind.Module; }
+    if value == "struct"  { return TokenKind.Struct; }
+    if value == "enum"    { return TokenKind.Enum; }
+    if value == "private" { return TokenKind.Private; }
+    if value == "const"   { return TokenKind.Const; }
+    if value == "mutable" { return TokenKind.Mutable; }
+    if value == "affine"  { return TokenKind.Affine; }
+    if value == "bare"    { return TokenKind.Bare; }
+    if value == "generic" { return TokenKind.Generic; }
+    if value == "range"   { return TokenKind.Range; }
+    if value == "int"     { return TokenKind.Int; }
+    if value == "float"   { return TokenKind.Float; }
+    if value == "string"  { return TokenKind.String; }
+    if value == "bool"    { return TokenKind.Bool; }
+    if value == "char"    { return TokenKind.Char; }
+    if value == "list"    { return TokenKind.List; }
+    if value == "table"   { return TokenKind.Table; }
+    if value == "option"  { return TokenKind.Option; }
+    if value == "result"  { return TokenKind.Result; }
+    return TokenKind.Ident;
+}
+
+# Read identifier or keyword
+# Returns (new_state, Token)
+
+Token read_ident(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable string value = "";
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_alnum(ch) {
+            value = value + ch;
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    TokenKind kind = keyword_or_ident(value);
+    return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
+}
+
+# Read integer or float literal
+
+Token read_number(string source, list(int) state) {
+    mutable list(int) s = state;
+    mutable string value = "";
+    mutable TokenKind kind = TokenKind.IntLit;
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if is_digit(ch) {
+            value = value + ch;
+            s = advance(source, s);
+        } else {
+            running = false;
+        }
+    }
+    if current_char(source, s) == "." and peek_char(source, s) != "." {
+        value = value + ".";
+        s = advance(source, s);
+        mutable bool running_f = true;
+        while running_f {
+            string ch = current_char(source, s);
+            if is_digit(ch) {
+                value = value + ch;
+                s = advance(source, s);
+            } else {
+                running_f = false;
+            }
+        }
+        kind = TokenKind.FloatLit;
+    }
+    return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
+}
+
+# Read single-quoted char literal
+
+Token read_char_lit(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    string value = current_char(source, s);
+    s = advance(source, s);
+    s = advance(source, s);
+    return Token(kind: TokenKind.CharLit, value: value, line: state_line(s), col: state_col(s));
+}
+
+# Read a symbol token
+
+Token read_symbol(string source, list(int) state) {
+    mutable list(int) s = state;
+    string ch = current_char(source, s);
+    s = advance(source, s);
+    string next = current_char(source, s);
+
+    if ch == "+" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.PlusEq,    value: "+=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Plus,     value: "+",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "-" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.MinusEq,   value: "-=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Minus,    value: "-",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "*" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.StarEq,    value: "*=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Star,     value: "*",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "/" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.SlashEq,   value: "/=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Slash,    value: "/",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "%" { return Token(kind: TokenKind.Percent,   value: "%",  line: state_line(s), col: state_col(s)); }
+    if ch == "=" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Eq,        value: "==", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Assign,   value: "=",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "!" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Neq,       value: "!=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Illegal,  value: "!",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "<" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Lte,       value: "<=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Lt,       value: "<",  line: state_line(s), col: state_col(s));
+    }
+    if ch == ">" {
+        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Gte,       value: ">=", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Gt,       value: ">",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "(" { return Token(kind: TokenKind.LParen,    value: "(",  line: state_line(s), col: state_col(s)); }
+    if ch == ")" { return Token(kind: TokenKind.RParen,    value: ")",  line: state_line(s), col: state_col(s)); }
+    if ch == "{" { return Token(kind: TokenKind.LBrace,    value: "{",  line: state_line(s), col: state_col(s)); }
+    if ch == "}" { return Token(kind: TokenKind.RBrace,    value: "}",  line: state_line(s), col: state_col(s)); }
+    if ch == "[" { return Token(kind: TokenKind.LBracket,  value: "[",  line: state_line(s), col: state_col(s)); }
+    if ch == "]" { return Token(kind: TokenKind.RBracket,  value: "]",  line: state_line(s), col: state_col(s)); }
+    if ch == ";" { return Token(kind: TokenKind.Semicolon, value: ";",  line: state_line(s), col: state_col(s)); }
+    if ch == "," { return Token(kind: TokenKind.Comma,     value: ",",  line: state_line(s), col: state_col(s)); }
+    if ch == ":" {
+        return Token(kind: TokenKind.Colon,    value: ":",  line: state_line(s), col: state_col(s));
+    }
+    if ch == "." {
+        if next == "." { s = advance(source, s); return Token(kind: TokenKind.DotDot,    value: "..", line: state_line(s), col: state_col(s)); }
+        return Token(kind: TokenKind.Dot,      value: ".",  line: state_line(s), col: state_col(s));
+    }
+    return Token(kind: TokenKind.Illegal, value: ch, line: state_line(s), col: state_col(s));
+}
+
+# Read double-quoted string with &{interpolation}
+# Returns list(Token) — may be multiple tokens for interpolated strings
+# Last element of the returned state list is the new lexer position:
+# we thread state back via a separate helper; see lexer.slt
+
+list(Token) read_string(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    mutable list(Token) results = empty;
+    mutable string current = "";
+    mutable int seg_line = state_line(s);
+    mutable int seg_col  = state_col(s);
+    mutable bool running = true;
+
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\"" or ch == "" {
+            running = false;
+        } else if ch == "&" and peek_char(source, s) == "{" {
+            if current.len() > 0 {
+                results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
+                current = "";
+            }
+            s = advance(source, s);
+            s = advance(source, s);
+            mutable string ident = "";
+            mutable bool reading = true;
+            while reading {
+                string ic = current_char(source, s);
+                if ic == "}" or ic == "" {
+                    reading = false;
+                } else {
+                    ident = ident + ic;
+                    s = advance(source, s);
+                }
+            }
+            s = advance(source, s);
+            results = results.add(Token(kind: TokenKind.Interp, value: ident, line: state_line(s), col: state_col(s)));
+            seg_line = state_line(s);
+            seg_col  = state_col(s);
+        } else if ch == "\\" {
+            s = advance(source, s);
+            string esc = current_char(source, s);
+            s = advance(source, s);
+            if esc == "n"  { current = current + "\n"; }
+            else if esc == "t"  { current = current + "\t"; }
+            else if esc == "\\" { current = current + "\\"; }
+            else if esc == "\"" { current = current + "\""; }
+            else { current = current + "\\" + esc; }
+        } else {
+            if current == "" {
+                seg_line = state_line(s);
+                seg_col  = state_col(s);
+            }
+            current = current + ch;
+            s = advance(source, s);
+        }
+    }
+
+    s = advance(source, s);
+
+    if current.len() > 0 {
+        results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
+    }
+    if results.len() == 0 {
+        results = results.add(Token(kind: TokenKind.StringLit, value: "", line: state_line(state), col: state_col(state)));
+    }
+
+    return results;
+}
+
+# Return the state after reading a string
+# Needed because read_string returns tokens, not state
+
+list(int) string_end_state(string source, list(int) state) {
+    mutable list(int) s = advance(source, state);
+    mutable bool running = true;
+    while running {
+        string ch = current_char(source, s);
+        if ch == "\"" or ch == "" {
+            running = false;
+        } else if ch == "\\" {
+            s = advance(source, s);
+            s = advance(source, s);
+        } else {
+            s = advance(source, s);
+        }
+    }
+    s = advance(source, s);
+    return s;
+}
