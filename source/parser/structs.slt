@@ -1,0 +1,160 @@
+module structs;
+
+use token;
+use node;
+use state;
+use types;
+use parsing;
+use stmt;
+use decl;
+
+# Parse struct field: type name;
+
+ParseResult parse_field(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    ParseResult type_result = parse_type(tokens, pos);
+    if type_result.ok == false { return type_result; }
+    Token name_tok = tokens.get(type_result.pos);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("field name", tokens, type_result.pos), type_result.pos);
+    }
+    int after_semi = expect_semicolon(tokens, type_result.pos + 1);
+    if after_semi == -1 {
+        return parse_err(expect_error("; after field", tokens, type_result.pos + 1), type_result.pos + 1);
+    }
+    return parse_ok(make_field(name_tok.value, type_result.node, line, col), after_semi);
+}
+
+# Parse struct declaration: [private] struct Name { fields and methods }
+
+ParseResult parse_struct_decl(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos;
+
+    if check(tokens, cur, TokenKind.Private) {
+        cur = cur + 1;
+    }
+    cur = cur + 1;
+
+    Token name_tok = tokens.get(cur);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("struct name", tokens, cur), cur);
+    }
+    string struct_name = name_tok.value;
+    cur = cur + 1;
+
+    int after_lbrace = expect_lbrace(tokens, cur);
+    if after_lbrace == -1 {
+        return parse_err(expect_error("{ after struct name", tokens, cur), cur);
+    }
+    cur = after_lbrace;
+
+    mutable list(Node) members = empty;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.RBrace) {
+            running = false;
+        } else if at_end(tokens, cur) {
+            return parse_err("unexpected end of file in struct", cur);
+        } else {
+            ParseResult type_result = parse_type(tokens, cur);
+            if type_result.ok == false { return type_result; }
+            if check(tokens, type_result.pos + 1, TokenKind.LParen) {
+                ParseResult method = parse_fn_decl(tokens, cur);
+                if method.ok == false { return method; }
+                members = members.add(method.node);
+                cur = method.pos;
+            } else {
+                ParseResult field = parse_field(tokens, cur);
+                if field.ok == false { return field; }
+                members = members.add(field.node);
+                cur = field.pos;
+            }
+        }
+    }
+
+    int after_rbrace = expect_rbrace(tokens, cur);
+    if after_rbrace == -1 {
+        return parse_err(expect_error("} after struct body", tokens, cur), cur);
+    }
+    return parse_ok(make_struct_decl(struct_name, members, line, col), after_rbrace);
+}
+
+# Parse enum variant: Name or Name(type)
+
+ParseResult parse_variant(list(Token) tokens, int pos) {
+    Token name_tok = tokens.get(pos);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("variant name", tokens, pos), pos);
+    }
+    string variant_name = name_tok.value;
+    int line = name_tok.line;
+    int col = name_tok.col;
+    mutable int cur = pos + 1;
+    mutable list(Node) payload = empty;
+
+    if check(tokens, cur, TokenKind.LParen) {
+        ParseResult payload_type = parse_type(tokens, cur + 1);
+        if payload_type.ok == false { return payload_type; }
+        payload = payload.add(payload_type.node);
+        int after_rparen = expect_rparen(tokens, payload_type.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after variant payload", tokens, payload_type.pos), payload_type.pos);
+        }
+        cur = after_rparen;
+    }
+
+    return parse_ok(make_variant(variant_name, payload, line, col), cur);
+}
+
+# Parse enum declaration: [private] enum Name { Variant, Variant(type), ... }
+
+ParseResult parse_enum_decl(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos;
+
+    if check(tokens, cur, TokenKind.Private) {
+        cur = cur + 1;
+    }
+    cur = cur + 1;
+
+    Token name_tok = tokens.get(cur);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("enum name", tokens, cur), cur);
+    }
+    string enum_name = name_tok.value;
+    cur = cur + 1;
+
+    int after_lbrace = expect_lbrace(tokens, cur);
+    if after_lbrace == -1 {
+        return parse_err(expect_error("{ after enum name", tokens, cur), cur);
+    }
+    cur = after_lbrace;
+
+    mutable list(Node) variants = empty;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.RBrace) {
+            running = false;
+        } else if at_end(tokens, cur) {
+            return parse_err("unexpected end of file in enum", cur);
+        } else {
+            ParseResult variant = parse_variant(tokens, cur);
+            if variant.ok == false { return variant; }
+            variants = variants.add(variant.node);
+            cur = variant.pos;
+            if check(tokens, cur, TokenKind.Comma) {
+                cur = cur + 1;
+            }
+        }
+    }
+
+    int after_rbrace = expect_rbrace(tokens, cur);
+    if after_rbrace == -1 {
+        return parse_err(expect_error("} after enum body", tokens, cur), cur);
+    }
+    return parse_ok(make_enum_decl(enum_name, variants, line, col), after_rbrace);
+}

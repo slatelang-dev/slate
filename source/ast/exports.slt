@@ -1,5 +1,5 @@
 module ast;
 
 use node;
-use ast_expr;
+use expressions;
 use stmt;

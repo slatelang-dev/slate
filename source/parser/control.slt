@@ -1,0 +1,157 @@
+module control;
+
+use token;
+use node;
+use state;
+use parsing;
+use stmt;
+use matching;
+
+# Parse if / else if / else
+
+ParseResult parse_if(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos + 1;
+
+    ParseResult cond = parse_expr(tokens, cur);
+    if cond.ok == false { return cond; }
+    cur = cond.pos;
+
+    ParseResult then_block = parse_block(tokens, cur);
+    if then_block.ok == false { return then_block; }
+    cur = then_block.pos;
+
+    mutable list(Node) else_children = empty;
+    if check(tokens, cur, TokenKind.Else) {
+        cur = cur + 1;
+        if check(tokens, cur, TokenKind.If) {
+            ParseResult else_if = parse_if(tokens, cur);
+            if else_if.ok == false { return else_if; }
+            else_children = else_children.add(else_if.node);
+            cur = else_if.pos;
+        } else {
+            ParseResult else_block = parse_block(tokens, cur);
+            if else_block.ok == false { return else_block; }
+            else_children = else_children.add(else_block.node);
+            cur = else_block.pos;
+        }
+    }
+
+    return parse_ok(make_if(cond.node, then_block.node, else_children, line, col), cur);
+}
+
+# Parse while loop
+
+ParseResult parse_while(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos + 1;
+
+    ParseResult cond = parse_expr(tokens, cur);
+    if cond.ok == false { return cond; }
+    cur = cond.pos;
+
+    ParseResult body = parse_block(tokens, cur);
+    if body.ok == false { return body; }
+
+    return parse_ok(make_while(cond.node, body.node, line, col), body.pos);
+}
+
+# Parse for loop
+
+ParseResult parse_for(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos + 1;
+
+    Token var_tok = tokens.get(cur);
+    if var_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("loop variable name", tokens, cur), cur);
+    }
+    string var_name = var_tok.value;
+    cur = cur + 1;
+
+    int after_in = expect(tokens, cur, TokenKind.In);
+    if after_in == -1 {
+        return parse_err(expect_error("in", tokens, cur), cur);
+    }
+    cur = after_in;
+
+    if check(tokens, cur, TokenKind.Range) {
+        int after_lparen = expect_lparen(tokens, cur + 1);
+        if after_lparen == -1 {
+            return parse_err(expect_error("( after range", tokens, cur + 1), cur + 1);
+        }
+        ParseResult start_expr = parse_expr(tokens, after_lparen);
+        if start_expr.ok == false { return start_expr; }
+        int after_comma = expect_comma(tokens, start_expr.pos);
+        if after_comma == -1 {
+            return parse_err(expect_error(", in range", tokens, start_expr.pos), start_expr.pos);
+        }
+        ParseResult end_expr = parse_expr(tokens, after_comma);
+        if end_expr.ok == false { return end_expr; }
+        int after_rparen = expect_rparen(tokens, end_expr.pos);
+        if after_rparen == -1 {
+            return parse_err(expect_error(") after range", tokens, end_expr.pos), end_expr.pos);
+        }
+        ParseResult body = parse_block(tokens, after_rparen);
+        if body.ok == false { return body; }
+        return parse_ok(make_for(var_name, start_expr.node, end_expr.node, body.node, line, col), body.pos);
+    }
+
+    ParseResult iterable = parse_expr(tokens, cur);
+    if iterable.ok == false { return iterable; }
+    ParseResult body = parse_block(tokens, iterable.pos);
+    if body.ok == false { return body; }
+    return parse_ok(make_for_in(var_name, iterable.node, body.node, line, col), body.pos);
+}
+
+# Parse a single statement
+
+ParseResult parse_stmt(list(Token) tokens, int pos) {
+    Token t = tokens.get(pos);
+
+    if t.kind == TokenKind.Return  { return parse_return(tokens, pos); }
+    if t.kind == TokenKind.If      { return parse_if(tokens, pos); }
+    if t.kind == TokenKind.While   { return parse_while(tokens, pos); }
+    if t.kind == TokenKind.For     { return parse_for(tokens, pos); }
+    if t.kind == TokenKind.Match   { return parse_match(tokens, pos); }
+    if t.kind == TokenKind.Mutable { return parse_var_decl(tokens, pos); }
+    if t.kind == TokenKind.Const   { return parse_var_decl(tokens, pos); }
+    if t.kind == TokenKind.Affine  { return parse_var_decl(tokens, pos); }
+
+    if t.kind == TokenKind.Break {
+        int after_semi = expect_semicolon(tokens, pos + 1);
+        if after_semi == -1 {
+            return parse_err(expect_error("; after break", tokens, pos + 1), pos + 1);
+        }
+        return parse_ok(make_break(t.line, t.col), after_semi);
+    }
+
+    bool is_type_kw = t.kind == TokenKind.Int or t.kind == TokenKind.Float
+        or t.kind == TokenKind.String or t.kind == TokenKind.Bool
+        or t.kind == TokenKind.Char or t.kind == TokenKind.List
+        or t.kind == TokenKind.Table or t.kind == TokenKind.Option
+        or t.kind == TokenKind.Result or t.kind == TokenKind.Void;
+
+    if is_type_kw { return parse_var_decl(tokens, pos); }
+
+    if t.kind == TokenKind.Ident {
+        Token next = tokens.get(pos + 1);
+        if next.kind == TokenKind.Ident { return parse_var_decl(tokens, pos); }
+        if next.kind == TokenKind.Assign or next.kind == TokenKind.PlusEq
+        or next.kind == TokenKind.MinusEq or next.kind == TokenKind.StarEq
+        or next.kind == TokenKind.SlashEq {
+            return parse_assign(tokens, pos);
+        }
+    }
+
+    ParseResult expr_result = parse_expr(tokens, pos);
+    if expr_result.ok == false { return expr_result; }
+    int after_semi = expect_semicolon(tokens, expr_result.pos);
+    if after_semi == -1 {
+        return parse_err(expect_error("; after expression statement", tokens, expr_result.pos), expr_result.pos);
+    }
+    return parse_ok(expr_result.node, after_semi);
+}

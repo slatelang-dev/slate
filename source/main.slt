@@ -2,6 +2,10 @@ use lexer;
 use ast;
 use parser;
 
+bool is_num(string ch) {
+    return ch >= "0" and ch <= "9";
+}
+
 void main() {
     list(Token) tokens = tokenize("x + 42");
     ParseResult result = parse_expr(tokens, 0);

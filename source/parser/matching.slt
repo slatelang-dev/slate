@@ -1,0 +1,82 @@
+module matching;
+
+use token;
+use node;
+use state;
+use parsing;
+use stmt;
+
+# Parse match statement
+
+ParseResult parse_match(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos + 1;
+
+    ParseResult val = parse_expr(tokens, cur);
+    if val.ok == false { return val; }
+    cur = val.pos;
+
+    int after_lbrace = expect_lbrace(tokens, cur);
+    if after_lbrace == -1 {
+        return parse_err(expect_error("{ after match expression", tokens, cur), cur);
+    }
+    cur = after_lbrace;
+
+    mutable list(Node) arms = empty;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.RBrace) {
+            running = false;
+        } else if at_end(tokens, cur) {
+            return parse_err("unexpected end of file in match", cur);
+        } else {
+            Token arm_tok = tokens.get(cur);
+            int arm_line = arm_tok.line;
+            int arm_col = arm_tok.col;
+            mutable string pattern_kind = "expr";
+            mutable list(Node) arm_children = empty;
+
+            if arm_tok.kind == TokenKind.Else {
+                pattern_kind = "else";
+                cur = cur + 1;
+            } else if arm_tok.kind == TokenKind.Some {
+                pattern_kind = "some";
+                cur = cur + 1;
+            } else if arm_tok.kind == TokenKind.None {
+                pattern_kind = "none";
+                cur = cur + 1;
+            } else if arm_tok.kind == TokenKind.Ok {
+                pattern_kind = "ok";
+                cur = cur + 1;
+            } else if arm_tok.kind == TokenKind.Error {
+                pattern_kind = "error";
+                cur = cur + 1;
+            } else {
+                ParseResult pat = parse_expr(tokens, cur);
+                if pat.ok == false { return pat; }
+                arm_children = arm_children.add(pat.node);
+                cur = pat.pos;
+            }
+
+            int after_colon = expect_colon(tokens, cur);
+            if after_colon == -1 {
+                return parse_err(expect_error(": after match pattern", tokens, cur), cur);
+            }
+            cur = after_colon;
+
+            ParseResult arm_body = parse_block(tokens, cur);
+            if arm_body.ok == false { return arm_body; }
+            arm_children = arm_children.add(arm_body.node);
+            cur = arm_body.pos;
+
+            arms = arms.add(make_match_arm(pattern_kind, arm_children, arm_line, arm_col));
+        }
+    }
+
+    int after_rbrace = expect_rbrace(tokens, cur);
+    if after_rbrace == -1 {
+        return parse_err(expect_error("} after match", tokens, cur), cur);
+    }
+    return parse_ok(make_match(val.node, arms, line, col), after_rbrace);
+}

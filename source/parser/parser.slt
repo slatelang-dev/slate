@@ -1,0 +1,112 @@
+module parser;
+
+use token;
+use node;
+use state;
+use types;
+use parsing;
+use stmt;
+use control;
+use matching;
+use decl;
+use structs;
+
+# Parse top-level declarations and produce a Program node
+
+ParseResult parse_program(list(Token) tokens) {
+    mutable list(Node) decls = empty;
+    mutable int cur = 0;
+    int line = tokens.get(cur).line;
+    int col = tokens.get(cur).col;
+    mutable bool running = true;
+
+    while running {
+        if at_end(tokens, cur) {
+            running = false;
+        } else {
+            Token t = tokens.get(cur);
+
+            # use statement
+            if t.kind == TokenKind.Use {
+                Token mod_tok = tokens.get(cur + 1);
+                if mod_tok.kind != TokenKind.Ident {
+                    return parse_err(expect_error("module name after use", tokens, cur + 1), cur + 1);
+                }
+                int after_semi = expect_semicolon(tokens, cur + 1 + 1);
+                if after_semi == -1 {
+                    return parse_err(expect_error("; after use", tokens, cur + 1 + 1), cur + 1 + 1);
+                }
+                decls = decls.add(make_use(mod_tok.value, t.line, t.col));
+                cur = after_semi;
+            }
+
+            # module declaration
+            else if t.kind == TokenKind.Module {
+                Token mod_tok = tokens.get(cur + 1);
+                if mod_tok.kind != TokenKind.Ident {
+                    return parse_err(expect_error("module name after module", tokens, cur + 1), cur + 1);
+                }
+                int after_semi = expect_semicolon(tokens, cur + 1 + 1);
+                if after_semi == -1 {
+                    return parse_err(expect_error("; after module", tokens, cur + 1 + 1), cur + 1 + 1);
+                }
+                decls = decls.add(make_module(mod_tok.value, t.line, t.col));
+                cur = after_semi;
+            }
+
+            # struct declaration
+            else if t.kind == TokenKind.Struct {
+                ParseResult result = parse_struct_decl(tokens, cur);
+                if result.ok == false { return result; }
+                decls = decls.add(result.node);
+                cur = result.pos;
+            }
+
+            # enum declaration
+            else if t.kind == TokenKind.Enum {
+                ParseResult result = parse_enum_decl(tokens, cur);
+                if result.ok == false { return result; }
+                decls = decls.add(result.node);
+                cur = result.pos;
+            }
+
+            # private struct/enum/fn
+            else if t.kind == TokenKind.Private {
+                Token next = tokens.get(cur + 1);
+                if next.kind == TokenKind.Struct {
+                    ParseResult result = parse_struct_decl(tokens, cur);
+                    if result.ok == false { return result; }
+                    decls = decls.add(result.node);
+                    cur = result.pos;
+                } else if next.kind == TokenKind.Enum {
+                    ParseResult result = parse_enum_decl(tokens, cur);
+                    if result.ok == false { return result; }
+                    decls = decls.add(result.node);
+                    cur = result.pos;
+                } else {
+                    ParseResult result = parse_fn_decl(tokens, cur);
+                    if result.ok == false { return result; }
+                    decls = decls.add(result.node);
+                    cur = result.pos;
+                }
+            }
+
+            # function declaration — type followed by ident followed by (
+            else {
+                ParseResult result = parse_fn_decl(tokens, cur);
+                if result.ok == false { return result; }
+                decls = decls.add(result.node);
+                cur = result.pos;
+            }
+        }
+    }
+
+    return parse_ok(make_program(decls, line, col), cur);
+}
+
+# Main entry point: source string -> Program node
+
+ParseResult parse(string source) {
+    list(Token) tokens = tokenize(source);
+    return parse_program(tokens);
+}

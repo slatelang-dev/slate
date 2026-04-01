@@ -1,4 +1,4 @@
-module ast_expr;
+module expressions;
 
 use node;
 

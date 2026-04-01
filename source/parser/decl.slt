@@ -1,0 +1,88 @@
+module decl;
+
+use token;
+use node;
+use state;
+use types;
+use parsing;
+use stmt;
+
+# Parse a parameter: type name
+
+ParseResult parse_param(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    ParseResult type_result = parse_type(tokens, pos);
+    if type_result.ok == false { return type_result; }
+    Token name_tok = tokens.get(type_result.pos);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("parameter name", tokens, type_result.pos), type_result.pos);
+    }
+    return parse_ok(make_param(name_tok.value, type_result.node, line, col), type_result.pos + 1);
+}
+
+# Parse parameter list: (param, param, ...)
+
+ParseResult parse_params(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    int after_lparen = expect_lparen(tokens, pos);
+    if after_lparen == -1 {
+        return parse_err(expect_error("( in parameter list", tokens, pos), pos);
+    }
+    mutable list(Node) params = empty;
+    mutable int cur = after_lparen;
+    mutable bool running = true;
+    while running {
+        if check(tokens, cur, TokenKind.RParen) {
+            running = false;
+        } else {
+            ParseResult param = parse_param(tokens, cur);
+            if param.ok == false { return param; }
+            params = params.add(param.node);
+            cur = param.pos;
+            if check(tokens, cur, TokenKind.Comma) {
+                cur = cur + 1;
+            } else {
+                running = false;
+            }
+        }
+    }
+    int after_rparen = expect_rparen(tokens, cur);
+    if after_rparen == -1 {
+        return parse_err(expect_error(") after parameter list", tokens, cur), cur);
+    }
+    return parse_ok(make_block(params, line, col), after_rparen);
+}
+
+# Parse function declaration: [private] return_type name(params) { body }
+
+ParseResult parse_fn_decl(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    mutable int cur = pos;
+
+    if check(tokens, cur, TokenKind.Private) {
+        cur = cur + 1;
+    }
+
+    ParseResult return_type = parse_type(tokens, cur);
+    if return_type.ok == false { return return_type; }
+    cur = return_type.pos;
+
+    Token name_tok = tokens.get(cur);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("function name", tokens, cur), cur);
+    }
+    string fn_name = name_tok.value;
+    cur = cur + 1;
+
+    ParseResult params = parse_params(tokens, cur);
+    if params.ok == false { return params; }
+    cur = params.pos;
+
+    ParseResult body = parse_block(tokens, cur);
+    if body.ok == false { return body; }
+
+    return parse_ok(make_fn_decl(fn_name, return_type.node, params.node.children, body.node, line, col), body.pos);
+}
