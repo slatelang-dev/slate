@@ -118,61 +118,56 @@ Token read_char_lit(string source, list(int) state) {
 
 # Read a symbol token
 
+Token make_token(TokenKind kind, string value, list(int) s) {
+    return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
+}
+
 Token read_symbol(string source, list(int) state) {
     mutable list(int) s = state;
     string ch = current_char(source, s);
     s = advance(source, s);
     string next = current_char(source, s);
 
-    if ch == "+" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.PlusEq,    value: "+=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Plus,     value: "+",  line: state_line(s), col: state_col(s));
+    match ch {
+        "+":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.PlusEq,  "+=", s); }
+            return make_token(TokenKind.Plus,    "+", s);
+        "-":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.MinusEq, "-=", s); }
+            return make_token(TokenKind.Minus,   "-", s);
+        "*":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.StarEq,  "*=", s); }
+            return make_token(TokenKind.Star,    "*", s);
+        "/":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.SlashEq, "/=", s); }
+            return make_token(TokenKind.Slash,   "/", s);
+        "=":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.Eq,      "==", s); }
+            return make_token(TokenKind.Assign,  "=", s);
+        "!":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.Neq,     "!=", s); }
+            return make_token(TokenKind.Illegal, "!", s);
+        "<":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.Lte,     "<=", s); }
+            return make_token(TokenKind.Lt,      "<", s);
+        ">":
+            if next == "=" { s = advance(source, s); return make_token(TokenKind.Gte,     ">=", s); }
+            return make_token(TokenKind.Gt,      ">", s);
+        ".":
+            if next == "." { s = advance(source, s); return make_token(TokenKind.DotDot,  "..", s); }
+            return make_token(TokenKind.Dot,     ".", s);
+        "%":  return make_token(TokenKind.Percent,   "%", s);
+        "(":  return make_token(TokenKind.LParen,    "(", s);
+        ")":  return make_token(TokenKind.RParen,    ")", s);
+        "{":  return make_token(TokenKind.LBrace,    "{", s);
+        "}":  return make_token(TokenKind.RBrace,    "}", s);
+        "[":  return make_token(TokenKind.LBracket,  "[", s);
+        "]":  return make_token(TokenKind.RBracket,  "]", s);
+        ";":  return make_token(TokenKind.Semicolon, ";", s);
+        ",":  return make_token(TokenKind.Comma,     ",", s);
+        ":":  return make_token(TokenKind.Colon,     ":", s);
+        else: return make_token(TokenKind.Illegal,   ch,  s);
     }
-    if ch == "-" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.MinusEq,   value: "-=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Minus,    value: "-",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "*" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.StarEq,    value: "*=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Star,     value: "*",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "/" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.SlashEq,   value: "/=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Slash,    value: "/",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "%" { return Token(kind: TokenKind.Percent,   value: "%",  line: state_line(s), col: state_col(s)); }
-    if ch == "=" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Eq,        value: "==", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Assign,   value: "=",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "!" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Neq,       value: "!=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Illegal,  value: "!",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "<" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Lte,       value: "<=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Lt,       value: "<",  line: state_line(s), col: state_col(s));
-    }
-    if ch == ">" {
-        if next == "=" { s = advance(source, s); return Token(kind: TokenKind.Gte,       value: ">=", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Gt,       value: ">",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "(" { return Token(kind: TokenKind.LParen,    value: "(",  line: state_line(s), col: state_col(s)); }
-    if ch == ")" { return Token(kind: TokenKind.RParen,    value: ")",  line: state_line(s), col: state_col(s)); }
-    if ch == "{" { return Token(kind: TokenKind.LBrace,    value: "{",  line: state_line(s), col: state_col(s)); }
-    if ch == "}" { return Token(kind: TokenKind.RBrace,    value: "}",  line: state_line(s), col: state_col(s)); }
-    if ch == "[" { return Token(kind: TokenKind.LBracket,  value: "[",  line: state_line(s), col: state_col(s)); }
-    if ch == "]" { return Token(kind: TokenKind.RBracket,  value: "]",  line: state_line(s), col: state_col(s)); }
-    if ch == ";" { return Token(kind: TokenKind.Semicolon, value: ";",  line: state_line(s), col: state_col(s)); }
-    if ch == "," { return Token(kind: TokenKind.Comma,     value: ",",  line: state_line(s), col: state_col(s)); }
-    if ch == ":" {
-        return Token(kind: TokenKind.Colon,    value: ":",  line: state_line(s), col: state_col(s));
-    }
-    if ch == "." {
-        if next == "." { s = advance(source, s); return Token(kind: TokenKind.DotDot,    value: "..", line: state_line(s), col: state_col(s)); }
-        return Token(kind: TokenKind.Dot,      value: ".",  line: state_line(s), col: state_col(s));
-    }
-    return Token(kind: TokenKind.Illegal, value: ch, line: state_line(s), col: state_col(s));
 }
 
 # Read double-quoted string with &{interpolation}

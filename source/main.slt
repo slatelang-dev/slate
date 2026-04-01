@@ -2,18 +2,7 @@ use lexer;
 use ast;
 use parser;
 
-bool is_num(string ch) {
-    return ch >= "0" and ch <= "9";
-}
-
 void main() {
-    list(Token) tokens = tokenize("x + 42");
-    ParseResult result = parse_expr(tokens, 0);
-    print(result.ok);
-    print(result.node.kind == NodeKind.BinaryOp);
-    print(result.node.value);
-    print(result.node.children.get(0).kind == NodeKind.Ident);
-    print(result.node.children.get(0).value);
-    print(result.node.children.get(1).kind == NodeKind.IntLit);
-    print(result.node.children.get(1).value);
+    list(Token) tokens = tokenize("x += 42");
+    print(token_value(tokens, 1));
 }
