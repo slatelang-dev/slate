@@ -6,48 +6,50 @@ use chars;
 # Map identifier string to TokenKind
 
 TokenKind keyword_or_ident(string value) {
-    if value == "and"     { return TokenKind.And; }
-    if value == "or"      { return TokenKind.Or; }
-    if value == "not"     { return TokenKind.Not; }
-    if value == "if"      { return TokenKind.If; }
-    if value == "else"    { return TokenKind.Else; }
-    if value == "for"     { return TokenKind.For; }
-    if value == "in"      { return TokenKind.In; }
-    if value == "while"   { return TokenKind.While; }
-    if value == "match"   { return TokenKind.Match; }
-    if value == "return"  { return TokenKind.Return; }
-    if value == "break"   { return TokenKind.Break; }
-    if value == "true"    { return TokenKind.True; }
-    if value == "false"   { return TokenKind.False; }
-    if value == "void"    { return TokenKind.Void; }
-    if value == "empty"   { return TokenKind.Empty; }
-    if value == "none"    { return TokenKind.None; }
-    if value == "some"    { return TokenKind.Some; }
-    if value == "ok"      { return TokenKind.Ok; }
-    if value == "error"   { return TokenKind.Error; }
-    if value == "is"      { return TokenKind.Is; }
-    if value == "as"      { return TokenKind.As; }
-    if value == "use"     { return TokenKind.Use; }
-    if value == "module"  { return TokenKind.Module; }
-    if value == "struct"  { return TokenKind.Struct; }
-    if value == "enum"    { return TokenKind.Enum; }
-    if value == "private" { return TokenKind.Private; }
-    if value == "const"   { return TokenKind.Const; }
-    if value == "mutable" { return TokenKind.Mutable; }
-    if value == "affine"  { return TokenKind.Affine; }
-    if value == "bare"    { return TokenKind.Bare; }
-    if value == "generic" { return TokenKind.Generic; }
-    if value == "range"   { return TokenKind.Range; }
-    if value == "int"     { return TokenKind.Int; }
-    if value == "float"   { return TokenKind.Float; }
-    if value == "string"  { return TokenKind.String; }
-    if value == "bool"    { return TokenKind.Bool; }
-    if value == "char"    { return TokenKind.Char; }
-    if value == "list"    { return TokenKind.List; }
-    if value == "table"   { return TokenKind.Table; }
-    if value == "option"  { return TokenKind.Option; }
-    if value == "result"  { return TokenKind.Result; }
-    return TokenKind.Ident;
+    match value {
+        "and":     return TokenKind.And;
+        "or":      return TokenKind.Or;
+        "not":     return TokenKind.Not;
+        "if":      return TokenKind.If;
+        "else":    return TokenKind.Else;
+        "for":     return TokenKind.For;
+        "in":      return TokenKind.In;
+        "while":   return TokenKind.While;
+        "match":   return TokenKind.Match;
+        "return":  return TokenKind.Return;
+        "break":   return TokenKind.Break;
+        "true":    return TokenKind.True;
+        "false":   return TokenKind.False;
+        "void":    return TokenKind.Void;
+        "empty":   return TokenKind.Empty;
+        "none":    return TokenKind.None;
+        "some":    return TokenKind.Some;
+        "ok":      return TokenKind.Ok;
+        "error":   return TokenKind.Error;
+        "is":      return TokenKind.Is;
+        "as":      return TokenKind.As;
+        "use":     return TokenKind.Use;
+        "module":  return TokenKind.Module;
+        "struct":  return TokenKind.Struct;
+        "enum":    return TokenKind.Enum;
+        "private": return TokenKind.Private;
+        "const":   return TokenKind.Const;
+        "mutable": return TokenKind.Mutable;
+        "affine":  return TokenKind.Affine;
+        "bare":    return TokenKind.Bare;
+        "generic": return TokenKind.Generic;
+        "range":   return TokenKind.Range;
+        "int":     return TokenKind.Int;
+        "float":   return TokenKind.Float;
+        "string":  return TokenKind.String;
+        "bool":    return TokenKind.Bool;
+        "char":    return TokenKind.Char;
+        "list":    return TokenKind.List;
+        "table":   return TokenKind.Table;
+        "option":  return TokenKind.Option;
+        "result":  return TokenKind.Result;
+        else:      return TokenKind.Ident;
+    }
 }
 
 # Read identifier or keyword
