@@ -1,4 +1,4 @@
-module parser;
+module program;
 
 use token;
 use node;

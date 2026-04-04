@@ -3,8 +3,6 @@ module reader;
 use token;
 use chars;
 
-# Map identifier string to TokenKind
-
 TokenKind keyword_or_ident(string value) {
     match value {
         "and":     return TokenKind.And;
@@ -52,9 +50,6 @@ TokenKind keyword_or_ident(string value) {
     }
 }
 
-# Read identifier or keyword
-# Returns (new_state, Token)
-
 Token read_ident(string source, list(int) state) {
     mutable list(int) s = state;
     mutable string value = "";
@@ -71,8 +66,6 @@ Token read_ident(string source, list(int) state) {
     TokenKind kind = keyword_or_ident(value);
     return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
 }
-
-# Read integer or float literal
 
 Token read_number(string source, list(int) state) {
     mutable list(int) s = state;
@@ -106,8 +99,6 @@ Token read_number(string source, list(int) state) {
     return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
 }
 
-# Read single-quoted char literal
-
 Token read_char_lit(string source, list(int) state) {
     mutable list(int) s = advance(source, state);
     string value = current_char(source, s);
@@ -115,8 +106,6 @@ Token read_char_lit(string source, list(int) state) {
     s = advance(source, s);
     return Token(kind: TokenKind.CharLit, value: value, line: state_line(s), col: state_col(s));
 }
-
-# Read a symbol token
 
 Token make_token(TokenKind kind, string value, list(int) s) {
     return Token(kind: kind, value: value, line: state_line(s), col: state_col(s));
@@ -168,95 +157,4 @@ Token read_symbol(string source, list(int) state) {
         ":":  return make_token(TokenKind.Colon,     ":", s);
         else: return make_token(TokenKind.Illegal,   ch,  s);
     }
-}
-
-# Read double-quoted string with &{interpolation}
-# Returns list(Token) — may be multiple tokens for interpolated strings
-# Last element of the returned state list is the new lexer position:
-# we thread state back via a separate helper; see lexer.slt
-
-list(Token) read_string(string source, list(int) state) {
-    mutable list(int) s = advance(source, state);
-    mutable list(Token) results = empty;
-    mutable string current = "";
-    mutable int seg_line = state_line(s);
-    mutable int seg_col  = state_col(s);
-    mutable bool running = true;
-
-    while running {
-        string ch = current_char(source, s);
-        if ch == "\"" or ch == "" {
-            running = false;
-        } else if ch == "&" and peek_char(source, s) == "{" {
-            if current.len() > 0 {
-                results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
-                current = "";
-            }
-            s = advance(source, s);
-            s = advance(source, s);
-            mutable string ident = "";
-            mutable bool reading = true;
-            while reading {
-                string ic = current_char(source, s);
-                if ic == "}" or ic == "" {
-                    reading = false;
-                } else {
-                    ident = ident + ic;
-                    s = advance(source, s);
-                }
-            }
-            s = advance(source, s);
-            results = results.add(Token(kind: TokenKind.Interp, value: ident, line: state_line(s), col: state_col(s)));
-            seg_line = state_line(s);
-            seg_col  = state_col(s);
-        } else if ch == "\\" {
-            s = advance(source, s);
-            string esc = current_char(source, s);
-            s = advance(source, s);
-            if esc == "n"  { current = current + "\n"; }
-            else if esc == "t"  { current = current + "\t"; }
-            else if esc == "\\" { current = current + "\\"; }
-            else if esc == "\"" { current = current + "\""; }
-            else { current = current + "\\" + esc; }
-        } else {
-            if current == "" {
-                seg_line = state_line(s);
-                seg_col  = state_col(s);
-            }
-            current = current + ch;
-            s = advance(source, s);
-        }
-    }
-
-    s = advance(source, s);
-
-    if current.len() > 0 {
-        results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
-    }
-    if results.len() == 0 {
-        results = results.add(Token(kind: TokenKind.StringLit, value: "", line: state_line(state), col: state_col(state)));
-    }
-
-    return results;
-}
-
-# Return the state after reading a string
-# Needed because read_string returns tokens, not state
-
-list(int) string_end_state(string source, list(int) state) {
-    mutable list(int) s = advance(source, state);
-    mutable bool running = true;
-    while running {
-        string ch = current_char(source, s);
-        if ch == "\"" or ch == "" {
-            running = false;
-        } else if ch == "\\" {
-            s = advance(source, s);
-            s = advance(source, s);
-        } else {
-            s = advance(source, s);
-        }
-    }
-    s = advance(source, s);
-    return s;
 }

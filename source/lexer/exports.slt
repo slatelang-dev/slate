@@ -5,3 +5,4 @@ use chars;
 use reader;
 use core;
 use tokenize;
+use strings;
