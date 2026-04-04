@@ -1,0 +1,129 @@
+module colors;
+
+# ANSI escape helpers
+
+string ansi_reset() {
+    return "\u001b[0m";
+}
+
+string ansi_fg(int code) {
+    return "\u001b[38;5;" + string(code) + "m";
+}
+
+string ansi_bg(int code) {
+    return "\u001b[48;5;" + string(code) + "m";
+}
+
+string ansi_rgb_fg(int r, int g, int b) {
+    return "\u001b[38;2;" + string(r) + ";" + string(g) + ";" + string(b) + "m";
+}
+
+string ansi_rgb_bg(int r, int g, int b) {
+    return "\u001b[48;2;" + string(r) + ";" + string(g) + ";" + string(b) + "m";
+}
+
+# Color builders
+
+string rgb(int r, int g, int b, string text) {
+    return ansi_rgb_fg(r, g, b) + text + ansi_reset();
+}
+
+string ansi(int code, string text) {
+    return ansi_fg(code) + text + ansi_reset();
+}
+
+string hex(string code, string text) {
+    # Parse #rrggbb or rrggbb
+    mutable string c = code;
+    if c.starts_with("#") {
+        c = c.replace("#", "");
+    }
+    string rs = c.split("").get(0) + c.split("").get(1);
+    string gs = c.split("").get(2) + c.split("").get(3);
+    string bs = c.split("").get(4) + c.split("").get(5);
+    # Bootstrap limitation: no hex parsing yet, fall back to plain text
+    # TODO: implement hex -> int conversion post-self-hosting
+    return text;
+}
+
+# Named colors
+
+string red(string text) {
+    return ansi_rgb_fg(220, 50, 50) + text + ansi_reset();
+}
+
+string green(string text) {
+    return ansi_rgb_fg(50, 200, 80) + text + ansi_reset();
+}
+
+string blue(string text) {
+    return ansi_rgb_fg(50, 120, 220) + text + ansi_reset();
+}
+
+string yellow(string text) {
+    return ansi_rgb_fg(230, 200, 50) + text + ansi_reset();
+}
+
+string orange(string text) {
+    return ansi_rgb_fg(230, 120, 30) + text + ansi_reset();
+}
+
+string purple(string text) {
+    return ansi_rgb_fg(150, 80, 220) + text + ansi_reset();
+}
+
+string slate(string text) {
+    return ansi_rgb_fg(112, 128, 144) + text + ansi_reset();
+}
+
+string gray(string text) {
+    return ansi_rgb_fg(140, 140, 140) + text + ansi_reset();
+}
+
+string white(string text) {
+    return ansi_rgb_fg(240, 240, 240) + text + ansi_reset();
+}
+
+string black(string text) {
+    return ansi_rgb_fg(20, 20, 20) + text + ansi_reset();
+}
+
+# Style modifiers
+
+string bold(string text) {
+    return "\u001b[1m" + text + ansi_reset();
+}
+
+string dim(string text) {
+    return "\u001b[2m" + text + ansi_reset();
+}
+
+string italic(string text) {
+    return "\u001b[3m" + text + ansi_reset();
+}
+
+string underline(string text) {
+    return "\u001b[4m" + text + ansi_reset();
+}
+
+# Combinations
+
+string bold_red(string text) {
+    return bold(red(text));
+}
+
+string bold_green(string text) {
+    return bold(green(text));
+}
+
+string bold_yellow(string text) {
+    return bold(yellow(text));
+}
+
+string bold_blue(string text) {
+    return bold(blue(text));
+}
+
+string bold_slate(string text) {
+    return bold(slate(text));
+}

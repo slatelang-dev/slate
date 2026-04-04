@@ -1,43 +1,7 @@
-use lexer;
-use ast;
-use parser;
+use ink;
 
 void main() {
-    # Test 1: expression parsing
-    list(Token) tokens = tokenize("x + 42");
-    ParseResult result = parse_expr(tokens, 0);
-    print(result.ok);
-    print(result.node.kind == NodeKind.BinaryOp);
-    print(result.node.value);
-    print(result.node.children.get(0).kind == NodeKind.Ident);
-    print(result.node.children.get(0).value);
-    print(result.node.children.get(1).kind == NodeKind.IntLit);
-    print(result.node.children.get(1).value);
-
-    # Test 2: full program parse
-    ParseResult prog = parse("void main() { int x = 42; }");
-    print(prog.ok);
-    print(prog.node.kind == NodeKind.Program);
-    print(prog.node.children.len());
-
-    # Test 3: function declaration
-    Node fn_node = prog.node.children.get(0);
-    print(fn_node.kind == NodeKind.FnDecl);
-    print(fn_node.value);
-
-    # Test 4: variable declaration inside function
-    Node body = fn_node.children.get(fn_node.children.len() - 1);
-    print(body.kind == NodeKind.Block);
-    print(body.children.len());
-    Node var_decl = body.children.get(0);
-    print(var_decl.kind == NodeKind.VarDecl);
-    print(var_decl.value);
-
-    # Test 5: if statement
-    ParseResult if_result = parse("void main() { if x > 0 { int y = 1; } }");
-    print(if_result.ok);
-
-    # Test 6: error case
-    ParseResult bad = parse_expr(tokenize(""), 0);
-    print(bad.ok);
+    print(red("Error:") + " " + yellow("something went wrong"));
+    print(bold_slate("Slate language"));
+    print(green("All good!"));
 }
