@@ -1,0 +1,146 @@
+module symbols;
+
+# A symbol represents a declared name in the program
+
+enum SymbolKind {
+    Variable,
+    MutableVariable,
+    ConstVariable,
+    AffineVariable,
+    Function,
+    Param,
+    Field,
+}
+
+struct Symbol {
+    string name;
+    string type_name;
+    SymbolKind kind;
+    bool initialized;
+    bool used;
+    int line;
+    int col;
+}
+
+Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int col) {
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: kind,
+        initialized: false,
+        used: false,
+        line: line,
+        col: col
+    );
+}
+
+Symbol make_var(string name, string type_name, int line, int col) {
+    return make_symbol(name, type_name, SymbolKind.Variable, line, col);
+}
+
+Symbol make_mutable_var(string name, string type_name, int line, int col) {
+    return make_symbol(name, type_name, SymbolKind.MutableVariable, line, col);
+}
+
+Symbol make_const_var(string name, string type_name, int line, int col) {
+    return make_symbol(name, type_name, SymbolKind.ConstVariable, line, col);
+}
+
+Symbol make_param(string name, string type_name, int line, int col) {
+    return make_symbol(name, type_name, SymbolKind.Param, line, col);
+}
+
+Symbol make_fn_symbol(string name, string return_type, int line, int col) {
+    return make_symbol(name, return_type, SymbolKind.Function, line, col);
+}
+
+bool symbol_is_mutable(Symbol sym) {
+    return sym.kind == SymbolKind.MutableVariable;
+}
+
+bool symbol_is_immutable(Symbol sym) {
+    return sym.kind == SymbolKind.Variable
+        or sym.kind == SymbolKind.Param
+        or sym.kind == SymbolKind.ConstVariable;
+}
+
+# A scope is a flat list of symbols
+# We represent the scope stack as list(list(Symbol)) but bootstrap
+# doesn't support that, so we use a flat list with a depth counter
+
+struct Scope {
+    list(Symbol) symbols;
+    int depth;
+}
+
+Scope new_scope() {
+    return Scope(symbols: empty, depth: 0);
+}
+
+Scope push_scope(Scope scope) {
+    return Scope(symbols: scope.symbols, depth: scope.depth + 1);
+}
+
+Scope pop_scope(Scope scope) {
+    mutable list(Symbol) remaining = empty;
+    mutable int i = 0;
+    while i < scope.symbols.len() {
+        Symbol sym = scope.symbols.get(i);
+        if sym.line <= scope.depth {
+            remaining = remaining.add(sym);
+        }
+        i += 1;
+    }
+    return Scope(symbols: remaining, depth: scope.depth - 1);
+}
+
+Scope declare_symbol(Scope scope, Symbol sym) {
+    Symbol tagged = Symbol(
+        name: sym.name,
+        type_name: sym.type_name,
+        kind: sym.kind,
+        initialized: sym.initialized,
+        used: sym.used,
+        line: scope.depth,
+        col: sym.col
+    );
+    return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth);
+}
+
+option(Symbol) lookup_symbol(Scope scope, string name) {
+    mutable int i = scope.symbols.len() - 1;
+    mutable option(Symbol) found = none;
+    mutable bool running = true;
+    while running {
+        if i < 0 {
+            running = false;
+        } else {
+            Symbol sym = scope.symbols.get(i);
+            if sym.name == name {
+                found = some(sym);
+                running = false;
+            }
+            i = i - 1;
+        }
+    }
+    return found;
+}
+
+bool symbol_exists_in_current_scope(Scope scope, string name) {
+    mutable int i = scope.symbols.len() - 1;
+    mutable bool found = false;
+    mutable bool running = true;
+    while running {
+        if i < 0 {
+            running = false;
+        } else {
+            Symbol sym = scope.symbols.get(i);
+            if sym.line == scope.depth and sym.name == name {
+                found = true;
+                running = false;
+            }
+            i = i - 1;
+        }
+    }
+    return found;
+}

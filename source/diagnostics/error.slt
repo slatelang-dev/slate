@@ -1,0 +1,130 @@
+module error;
+
+use span;
+
+enum ErrorKind {
+    # Symbol errors
+    UndefinedVariable,
+    UndefinedFunction,
+    DuplicateVariable,
+    DuplicateFunction,
+    DuplicateParam,
+    DuplicateField,
+
+    # Type errors
+    TypeMismatch,
+    InvalidAssignment,
+    InvalidReturn,
+    InvalidArgCount,
+    InvalidArgType,
+    InvalidCondition,
+    InvalidOperand,
+
+    # Mutability errors
+    ImmutableAssignment,
+    UninitializedVariable,
+
+    # Return errors
+    MissingReturn,
+    UnreachableCode,
+
+    # Use errors
+    InvalidUse,
+    CircularUse,
+}
+
+struct AnalysisError {
+    ErrorKind kind;
+    string message;
+    string hint;
+    Span location;
+}
+
+# Constructors
+
+AnalysisError make_error(ErrorKind kind, string message, string hint, Span location) {
+    return AnalysisError(kind: kind, message: message, hint: hint, location: location);
+}
+
+# Common error constructors
+
+AnalysisError undefined_variable(string name, Span location) {
+    return make_error(
+        ErrorKind.UndefinedVariable,
+        "Undefined variable: " + name,
+        "Make sure " + name + " is declared before you use it",
+        location
+    );
+}
+
+AnalysisError undefined_function(string name, Span location) {
+    return make_error(
+        ErrorKind.UndefinedFunction,
+        "Undefined function: " + name,
+        "Make sure " + name + " is declared before you call it",
+        location
+    );
+}
+
+AnalysisError duplicate_variable(string name, Span location) {
+    return make_error(
+        ErrorKind.DuplicateVariable,
+        "Variable already declared: " + name,
+        "Choose a different name or remove the duplicate declaration",
+        location
+    );
+}
+
+AnalysisError duplicate_function(string name, Span location) {
+    return make_error(
+        ErrorKind.DuplicateFunction,
+        "Function already declared: " + name,
+        "Choose a different name or remove the duplicate declaration",
+        location
+    );
+}
+
+AnalysisError type_mismatch(string expected, string got, Span location) {
+    return make_error(
+        ErrorKind.TypeMismatch,
+        "Type mismatch: expected " + expected + " but got " + got,
+        "Make sure the value matches the expected type",
+        location
+    );
+}
+
+AnalysisError immutable_assignment(string name, Span location) {
+    return make_error(
+        ErrorKind.ImmutableAssignment,
+        "Cannot assign to immutable variable: " + name,
+        "Declare " + name + " as mutable to allow reassignment",
+        location
+    );
+}
+
+AnalysisError missing_return(string fn_name, string return_type, Span location) {
+    return make_error(
+        ErrorKind.MissingReturn,
+        "Function " + fn_name + " does not return on all paths",
+        "Add a return statement that returns a " + return_type,
+        location
+    );
+}
+
+AnalysisError invalid_arg_count(string name, int expected, int got, Span location) {
+    return make_error(
+        ErrorKind.InvalidArgCount,
+        name + "() expects " + string(expected) + " argument(s) but got " + string(got),
+        "Check how many arguments " + name + " takes",
+        location
+    );
+}
+
+AnalysisError uninitialized_variable(string name, Span location) {
+    return make_error(
+        ErrorKind.UninitializedVariable,
+        "Variable used before initialization: " + name,
+        "Make sure " + name + " is assigned a value before you use it",
+        location
+    );
+}

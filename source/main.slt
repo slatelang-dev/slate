@@ -1,7 +1,0 @@
-use ink;
-
-void main() {
-    print(red("Error:") + " " + yellow("something went wrong"));
-    print(bold_slate("Slate language"));
-    print(green("All good!"));
-}

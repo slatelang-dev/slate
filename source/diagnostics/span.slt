@@ -1,0 +1,40 @@
+module span;
+
+# Source location — points to exactly where something went wrong
+
+struct Span {
+    string file;
+    int line;
+    int col;
+    int length;
+}
+
+# Constructors
+
+Span make_span(string file, int line, int col, int length) {
+    return Span(file: file, line: line, col: col, length: length);
+}
+
+Span make_span_point(string file, int line, int col) {
+    return Span(file: file, line: line, col: col, length: 1);
+}
+
+Span empty_span() {
+    return Span(file: "", line: 0, col: 0, length: 0);
+}
+
+# Extract span from a Node
+
+Span span_of(Node node, string file) {
+    return make_span(file, node.line, node.col, node.value.len());
+}
+
+# Display helpers
+
+string span_location(Span s) {
+    return s.file + ":" + string(s.line) + ":" + string(s.col);
+}
+
+string span_short(Span s) {
+    return "line " + string(s.line) + " col " + string(s.col);
+}

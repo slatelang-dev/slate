@@ -1,0 +1,71 @@
+module warning;
+
+use span;
+
+enum WarnKind {
+    UnusedVariable,
+    UnusedFunction,
+    UnusedImport,
+    UnreachableCode,
+    RedundantReturn,
+}
+
+struct AnalysisWarning {
+    WarnKind kind;
+    string message;
+    string hint;
+    Span location;
+}
+
+# Constructors
+
+AnalysisWarning make_warning(WarnKind kind, string message, string hint, Span location) {
+    return AnalysisWarning(kind: kind, message: message, hint: hint, location: location);
+}
+
+# Common warning constructors
+
+AnalysisWarning unused_variable(string name, Span location) {
+    return make_warning(
+        WarnKind.UnusedVariable,
+        "Unused variable: " + name,
+        "Prefix with _ to suppress: _" + name,
+        location
+    );
+}
+
+AnalysisWarning unused_function(string name, Span location) {
+    return make_warning(
+        WarnKind.UnusedFunction,
+        "Unused function: " + name,
+        "Prefix with _ to suppress: _" + name,
+        location
+    );
+}
+
+AnalysisWarning unused_import(string name, Span location) {
+    return make_warning(
+        WarnKind.UnusedImport,
+        "Unused import: " + name,
+        "Remove the use statement if " + name + " is not needed",
+        location
+    );
+}
+
+AnalysisWarning unreachable_code(Span location) {
+    return make_warning(
+        WarnKind.UnreachableCode,
+        "Unreachable code",
+        "This code can never be reached — remove it or fix the logic above",
+        location
+    );
+}
+
+AnalysisWarning redundant_return(Span location) {
+    return make_warning(
+        WarnKind.RedundantReturn,
+        "Redundant return statement",
+        "This return is not needed at the end of a void function",
+        location
+    );
+}
