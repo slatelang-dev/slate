@@ -1,0 +1,179 @@
+module resolver;
+
+use node;
+use symbols;
+use error;
+use warning;
+use span;
+
+# Resolution result — carries errors, warnings, and updated scope
+
+struct ResolveResult {
+    list(AnalysisError) errors;
+    list(AnalysisWarning) warnings;
+    Scope scope;
+}
+
+ResolveResult make_resolve_result(list(AnalysisError) errors, list(AnalysisWarning) warnings, Scope scope) {
+    return ResolveResult(errors: errors, warnings: warnings, scope: scope);
+}
+
+ResolveResult empty_resolve_result(Scope scope) {
+    return ResolveResult(errors: empty, warnings: empty, scope: scope);
+}
+
+ResolveResult merge_results(ResolveResult a, ResolveResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable list(AnalysisWarning) warnings = a.warnings;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    i = 0;
+    while i < b.warnings.len() {
+        warnings = warnings.add(b.warnings.get(i));
+        i += 1;
+    }
+    return ResolveResult(errors: errors, warnings: warnings, scope: b.scope);
+}
+
+# Resolve an identifier — check it exists in scope
+
+ResolveResult resolve_ident(string name, int line, int col, string file, Scope scope) {
+    option(Symbol) sym = lookup_symbol(scope, name);
+    if sym.exists() == false {
+        Span s = make_span(file, line, col, name.len());
+        AnalysisError err = undefined_variable(name, s);
+        return ResolveResult(errors: (err,), warnings: empty, scope: scope);
+    }
+    return empty_resolve_result(scope);
+}
+
+# Resolve a function call — check function exists and arg count matches
+
+ResolveResult resolve_call(string name, int arg_count, int line, int col, string file, Scope scope) {
+    option(Symbol) sym = lookup_symbol(scope, name);
+    if sym.exists() == false {
+        Span s = make_span(file, line, col, name.len());
+        AnalysisError err = undefined_function(name, s);
+        return ResolveResult(errors: (err,), warnings: empty, scope: scope);
+    }
+    return empty_resolve_result(scope);
+}
+
+# Declare a variable in scope — check for duplicates
+
+ResolveResult declare_var(string name, string type_name, NodeKind kind, int line, int col, string file, Scope scope) {
+    if symbol_exists_in_current_scope(scope, name) {
+        Span s = make_span(file, line, col, name.len());
+        AnalysisError err = duplicate_variable(name, s);
+        return ResolveResult(errors: (err,), warnings: empty, scope: scope);
+    }
+    mutable Symbol sym = make_var(name, type_name, line, col);
+    if kind == NodeKind.MutableDecl {
+        sym = make_mutable_var(name, type_name, line, col);
+    } else if kind == NodeKind.ConstDecl {
+        sym = make_const_var(name, type_name, line, col);
+    } else if kind == NodeKind.Param {
+        sym = make_param(name, type_name, line, col);
+    }
+    Scope new_scope = declare_symbol(scope, sym);
+    return empty_resolve_result(new_scope);
+}
+
+# Resolve an expression node
+
+ResolveResult resolve_expr(Node node, string file, Scope scope) {
+    if node.kind == NodeKind.Ident {
+        return resolve_ident(node.value, node.line, node.col, file, scope);
+    }
+    if node.kind == NodeKind.Call {
+        ResolveResult r = resolve_call(node.value, node.children.len(), node.line, node.col, file, scope);
+        mutable int i = 0;
+        while i < node.children.len() {
+            ResolveResult arg_r = resolve_expr(node.children.get(i), file, r.scope);
+            r = merge_results(r, arg_r);
+            i += 1;
+        }
+        return r;
+    }
+    if node.kind == NodeKind.BinaryOp or node.kind == NodeKind.UnaryOp {
+        mutable ResolveResult r = empty_resolve_result(scope);
+        mutable int i = 0;
+        while i < node.children.len() {
+            ResolveResult cr = resolve_expr(node.children.get(i), file, r.scope);
+            r = merge_results(r, cr);
+            i += 1;
+        }
+        return r;
+    }
+    if node.kind == NodeKind.FieldAccess or node.kind == NodeKind.MethodCall {
+        return resolve_expr(node.children.get(0), file, scope);
+    }
+    if node.kind == NodeKind.Some or node.kind == NodeKind.Ok or node.kind == NodeKind.Error {
+        return resolve_expr(node.children.get(0), file, scope);
+    }
+    return empty_resolve_result(scope);
+}
+
+# Resolve a statement node
+
+ResolveResult resolve_stmt(Node node, string file, Scope scope) {
+    if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
+    or node.kind == NodeKind.ConstDecl or node.kind == NodeKind.AffineDecl {
+        string type_name = node.children.get(0).value;
+        string var_name = node.value;
+        ResolveResult decl_r = declare_var(var_name, type_name, node.kind, node.line, node.col, file, scope);
+        ResolveResult init_r = resolve_expr(node.children.get(1), file, decl_r.scope);
+        return merge_results(decl_r, init_r);
+    }
+    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        ResolveResult r = resolve_ident(node.value, node.line, node.col, file, scope);
+        ResolveResult val_r = resolve_expr(node.children.get(0), file, r.scope);
+        return merge_results(r, val_r);
+    }
+    if node.kind == NodeKind.Return {
+        if node.children.len() > 0 {
+            return resolve_expr(node.children.get(0), file, scope);
+        }
+        return empty_resolve_result(scope);
+    }
+    if node.kind == NodeKind.If {
+        ResolveResult cond_r = resolve_expr(node.children.get(0), file, scope);
+        Scope inner = push_scope(cond_r.scope);
+        ResolveResult then_r = resolve_block(node.children.get(1), file, inner);
+        ResolveResult r = merge_results(cond_r, then_r);
+        if node.children.len() > 2 {
+            ResolveResult else_r = resolve_block(node.children.get(2), file, push_scope(r.scope));
+            r = merge_results(r, else_r);
+        }
+        return r;
+    }
+    if node.kind == NodeKind.While {
+        ResolveResult cond_r = resolve_expr(node.children.get(0), file, scope);
+        Scope inner = push_scope(cond_r.scope);
+        ResolveResult body_r = resolve_block(node.children.get(1), file, inner);
+        return merge_results(cond_r, body_r);
+    }
+    if node.kind == NodeKind.Block {
+        return resolve_block(node, file, scope);
+    }
+    if node.kind == NodeKind.Expression {
+        return resolve_expr(node.children.get(0), file, scope);
+    }
+    return empty_resolve_result(scope);
+}
+
+# Resolve a block of statements
+
+ResolveResult resolve_block(Node block, string file, Scope scope) {
+    mutable ResolveResult r = empty_resolve_result(scope);
+    mutable int i = 0;
+    while i < block.children.len() {
+        ResolveResult sr = resolve_stmt(block.children.get(i), file, r.scope);
+        r = merge_results(r, sr);
+        i += 1;
+    }
+    return r;
+}

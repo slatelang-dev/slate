@@ -1,0 +1,194 @@
+module checker;
+
+use node;
+use symbols;
+use error;
+use span;
+
+# Type checking result
+
+struct CheckResult {
+    list(AnalysisError) errors;
+    string inferred_type;
+}
+
+CheckResult check_ok(string inferred_type) {
+    return CheckResult(errors: empty, inferred_type: inferred_type);
+}
+
+CheckResult check_err(AnalysisError err) {
+    return CheckResult(errors: (err,), inferred_type: "unknown");
+}
+
+CheckResult merge_check(CheckResult a, CheckResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    return CheckResult(errors: errors, inferred_type: b.inferred_type);
+}
+
+# Infer the type of a literal or simple expression
+
+string infer_literal_type(Node node) {
+    if node.kind == NodeKind.IntLit    { return "int"; }
+    if node.kind == NodeKind.FloatLit  { return "float"; }
+    if node.kind == NodeKind.StringLit { return "string"; }
+    if node.kind == NodeKind.CharLit   { return "char"; }
+    if node.kind == NodeKind.BoolLit   { return "bool"; }
+    if node.kind == NodeKind.None      { return "option"; }
+    if node.kind == NodeKind.Empty     { return "empty"; }
+    if node.kind == NodeKind.Some      { return "option"; }
+    if node.kind == NodeKind.Ok        { return "result"; }
+    if node.kind == NodeKind.Error     { return "result"; }
+    return "unknown";
+}
+
+# Check if two types are compatible for assignment
+
+bool types_compatible(string expected, string got) {
+    if expected == got          { return true; }
+    if expected == "unknown"    { return true; }
+    if got == "unknown"         { return true; }
+    if expected == "option"     { return got == "option" or got == "none"; }
+    if expected == "result"     { return got == "result"; }
+    if expected == "float" and got == "int" { return true; }
+    return false;
+}
+
+# Check a variable declaration
+
+CheckResult check_var_decl(Node node, Scope scope, string file) {
+    string declared_type = node.children.get(0).value;
+    Node init_expr = node.children.get(1);
+    CheckResult init_check = check_expr(init_expr, scope, file);
+
+    if init_check.inferred_type == "unknown" {
+        return init_check;
+    }
+
+    if types_compatible(declared_type, init_check.inferred_type) == false {
+        Span s = make_span(file, node.line, node.col, node.value.len());
+        AnalysisError err = type_mismatch(declared_type, init_check.inferred_type, s);
+        return merge_check(init_check, check_err(err));
+    }
+
+    return init_check;
+}
+
+# Check an assignment
+
+CheckResult check_assign(Node node, Scope scope, string file) {
+    option(Symbol) sym = lookup_symbol(scope, node.value);
+    if sym.exists() == false {
+        return check_ok("unknown");
+    }
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+    if symbol_is_immutable(s) {
+        Span sp = make_span(file, node.line, node.col, node.value.len());
+        AnalysisError err = immutable_assignment(node.value, sp);
+        return check_err(err);
+    }
+    CheckResult val_check = check_expr(node.children.get(0), scope, file);
+    if types_compatible(s.type_name, val_check.inferred_type) == false {
+        Span sp = make_span(file, node.line, node.col, node.value.len());
+        AnalysisError err = type_mismatch(s.type_name, val_check.inferred_type, sp);
+        return merge_check(val_check, check_err(err));
+    }
+    return val_check;
+}
+
+# Check a binary operation — infer result type
+
+CheckResult check_binary_op(Node node, Scope scope, string file) {
+    CheckResult left = check_expr(node.children.get(0), scope, file);
+    CheckResult right = check_expr(node.children.get(1), scope, file);
+    mutable CheckResult r = merge_check(left, right);
+
+    string op = node.value;
+    if op == "==" or op == "!=" or op == "<" or op == ">"
+    or op == "<=" or op == ">=" or op == "and" or op == "or" {
+        r = CheckResult(errors: r.errors, inferred_type: "bool");
+    } else if left.inferred_type == "float" or right.inferred_type == "float" {
+        r = CheckResult(errors: r.errors, inferred_type: "float");
+    } else {
+        r = CheckResult(errors: r.errors, inferred_type: left.inferred_type);
+    }
+
+    return r;
+}
+
+# Check an expression — returns inferred type
+
+CheckResult check_expr(Node node, Scope scope, string file) {
+    string lit_type = infer_literal_type(node);
+    if lit_type != "unknown" {
+        return check_ok(lit_type);
+    }
+
+    if node.kind == NodeKind.Ident {
+        option(Symbol) sym = lookup_symbol(scope, node.value);
+        if sym.exists() {
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+            return check_ok(s.type_name);
+        }
+        return check_ok("unknown");
+    }
+
+    if node.kind == NodeKind.BinaryOp {
+        return check_binary_op(node, scope, file);
+    }
+
+    if node.kind == NodeKind.UnaryOp {
+        CheckResult inner = check_expr(node.children.get(0), scope, file);
+        if node.value == "not" {
+            return CheckResult(errors: inner.errors, inferred_type: "bool");
+        }
+        return inner;
+    }
+
+    if node.kind == NodeKind.Call {
+        option(Symbol) sym = lookup_symbol(scope, node.value);
+        if sym.exists() {
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+            return check_ok(s.type_name);
+        }
+        return check_ok("unknown");
+    }
+
+    if node.kind == NodeKind.MethodCall or node.kind == NodeKind.FieldAccess {
+        return check_ok("unknown");
+    }
+
+    return check_ok("unknown");
+}
+
+# Check a statement
+
+CheckResult check_stmt(Node node, Scope scope, string file) {
+    if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
+    or node.kind == NodeKind.ConstDecl or node.kind == NodeKind.AffineDecl {
+        return check_var_decl(node, scope, file);
+    }
+    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        return check_assign(node, scope, file);
+    }
+    if node.kind == NodeKind.Return {
+        if node.children.len() > 0 {
+            return check_expr(node.children.get(0), scope, file);
+        }
+        return check_ok("void");
+    }
+    if node.kind == NodeKind.If or node.kind == NodeKind.While {
+        CheckResult cond = check_expr(node.children.get(0), scope, file);
+        if cond.inferred_type != "bool" and cond.inferred_type != "unknown" {
+            Span s = make_span(file, node.line, node.col, 2);
+            AnalysisError err = make_error(ErrorKind.InvalidCondition, "Condition must be bool", "Use a boolean expression here", s);
+            return merge_check(cond, check_err(err));
+        }
+        return cond;
+    }
+    return check_ok("void");
+}
