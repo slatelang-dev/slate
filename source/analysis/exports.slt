@@ -1,1 +1,13 @@
 module analysis;
+
+use node;
+use symbols;
+use error;
+use warning;
+use span;
+use resolver;
+use checker;
+use mutability;
+use returns;
+use usage;
+use core;

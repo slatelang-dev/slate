@@ -1,0 +1,161 @@
+module usage;
+
+use node;
+use symbols;
+use warning;
+use span;
+
+# Usage check result
+
+struct UsageResult {
+    list(AnalysisWarning) warnings;
+    Scope scope;
+}
+
+UsageResult usage_ok(Scope scope) {
+    return UsageResult(warnings: empty, scope: scope);
+}
+
+UsageResult usage_warn(AnalysisWarning w, Scope scope) {
+    return UsageResult(warnings: (w,), scope: scope);
+}
+
+UsageResult merge_usage(UsageResult a, UsageResult b) {
+    mutable list(AnalysisWarning) warnings = a.warnings;
+    mutable int i = 0;
+    while i < b.warnings.len() {
+        warnings = warnings.add(b.warnings.get(i));
+        i += 1;
+    }
+    return UsageResult(warnings: warnings, scope: b.scope);
+}
+
+# Mark a symbol as used in scope
+
+Scope mark_used(string name, Scope scope) {
+    mutable list(Symbol) updated = empty;
+    mutable int i = 0;
+    while i < scope.symbols.len() {
+        Symbol sym = scope.symbols.get(i);
+        if sym.name == name {
+            Symbol marked = Symbol(
+                name: sym.name,
+                type_name: sym.type_name,
+                kind: sym.kind,
+                initialized: sym.initialized,
+                used: true,
+                line: sym.line,
+                col: sym.col
+            );
+            updated = updated.add(marked);
+        } else {
+            updated = updated.add(sym);
+        }
+        i += 1;
+    }
+    return Scope(symbols: updated, depth: scope.depth);
+}
+
+# Track identifier usage in an expression
+
+Scope track_expr_usage(Node node, Scope scope) {
+    if node.kind == NodeKind.Ident {
+        return mark_used(node.value, scope);
+    }
+    if node.kind == NodeKind.Call {
+        mutable Scope s = mark_used(node.value, scope);
+        mutable int i = 0;
+        while i < node.children.len() {
+            s = track_expr_usage(node.children.get(i), s);
+            i += 1;
+        }
+        return s;
+    }
+    if node.kind == NodeKind.BinaryOp or node.kind == NodeKind.UnaryOp {
+        mutable Scope s = scope;
+        mutable int i = 0;
+        while i < node.children.len() {
+            s = track_expr_usage(node.children.get(i), s);
+            i += 1;
+        }
+        return s;
+    }
+    if node.kind == NodeKind.FieldAccess or node.kind == NodeKind.MethodCall {
+        return track_expr_usage(node.children.get(0), scope);
+    }
+    if node.kind == NodeKind.Some or node.kind == NodeKind.Ok or node.kind == NodeKind.Error {
+        return track_expr_usage(node.children.get(0), scope);
+    }
+    return scope;
+}
+
+# Track usage in a statement
+
+Scope track_stmt_usage(Node node, Scope scope) {
+    if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
+    or node.kind == NodeKind.ConstDecl or node.kind == NodeKind.AffineDecl {
+        return track_expr_usage(node.children.get(1), scope);
+    }
+    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        mutable Scope s = mark_used(node.value, scope);
+        s = track_expr_usage(node.children.get(0), s);
+        return s;
+    }
+    if node.kind == NodeKind.Return {
+        if node.children.len() > 0 {
+            return track_expr_usage(node.children.get(0), scope);
+        }
+        return scope;
+    }
+    if node.kind == NodeKind.If {
+        mutable Scope s = track_expr_usage(node.children.get(0), scope);
+        s = track_block_usage(node.children.get(1), s);
+        if node.children.len() > 2 {
+            s = track_block_usage(node.children.get(2), s);
+        }
+        return s;
+    }
+    if node.kind == NodeKind.While {
+        mutable Scope s = track_expr_usage(node.children.get(0), scope);
+        s = track_block_usage(node.children.get(1), s);
+        return s;
+    }
+    if node.kind == NodeKind.Block {
+        return track_block_usage(node, scope);
+    }
+    return scope;
+}
+
+# Track usage across a block
+
+Scope track_block_usage(Node block, Scope scope) {
+    mutable Scope s = scope;
+    mutable int i = 0;
+    while i < block.children.len() {
+        s = track_stmt_usage(block.children.get(i), s);
+        i += 1;
+    }
+    return s;
+}
+
+# Warn about unused symbols in current scope depth
+
+UsageResult warn_unused(Scope scope, string file) {
+    mutable list(AnalysisWarning) warnings = empty;
+    mutable int i = 0;
+    while i < scope.symbols.len() {
+        Symbol sym = scope.symbols.get(i);
+        if sym.used == false and sym.line == scope.depth {
+            if sym.name.starts_with("_") == false {
+                Span sp = make_span(file, sym.line, sym.col, sym.name.len());
+                if sym.kind == SymbolKind.Function {
+                    warnings = warnings.add(unused_function(sym.name, sp));
+                } else {
+                    warnings = warnings.add(unused_variable(sym.name, sp));
+                }
+            }
+        }
+        i += 1;
+    }
+    return UsageResult(warnings: warnings, scope: scope);
+}

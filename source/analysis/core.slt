@@ -1,0 +1,147 @@
+module core;
+
+use node;
+use symbols;
+use error;
+use warning;
+use span;
+use resolver;
+use checker;
+use mutability;
+use returns;
+use usage;
+
+# Top-level analysis result
+
+struct AnalysisResult {
+    list(AnalysisError) errors;
+    list(AnalysisWarning) warnings;
+}
+
+AnalysisResult analysis_ok() {
+    return AnalysisResult(errors: empty, warnings: empty);
+}
+
+AnalysisResult merge_analysis(AnalysisResult a, AnalysisResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable list(AnalysisWarning) warnings = a.warnings;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    i = 0;
+    while i < b.warnings.len() {
+        warnings = warnings.add(b.warnings.get(i));
+        i += 1;
+    }
+    return AnalysisResult(errors: errors, warnings: warnings);
+}
+
+# Analyse a single function declaration
+
+AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
+    mutable AnalysisResult result = analysis_ok();
+    string fn_name = fn_node.value;
+    Node body = fn_node.children.get(fn_node.children.len() - 1);
+
+    # Push scope for function body
+    Scope fn_scope = push_scope(scope);
+
+    # Declare params in scope
+    mutable Scope cur_scope = fn_scope;
+    mutable int i = 1;
+    while i < fn_node.children.len() - 1 {
+        Node param = fn_node.children.get(i);
+        string param_type = param.children.get(0).value;
+        ResolveResult decl = declare_var(param.value, param_type, NodeKind.Param, param.line, param.col, file, cur_scope);
+        mutable int j = 0;
+        while j < decl.errors.len() {
+            result = AnalysisResult(errors: result.errors.add(decl.errors.get(j)), warnings: result.warnings);
+            j += 1;
+        }
+        cur_scope = decl.scope;
+        i += 1;
+    }
+
+    # Symbol resolution
+    ResolveResult resolve = resolve_block(body, file, cur_scope);
+    i = 0;
+    while i < resolve.errors.len() {
+        result = AnalysisResult(errors: result.errors.add(resolve.errors.get(i)), warnings: result.warnings);
+        i += 1;
+    }
+
+    # Type checking
+    CheckResult check = check_stmt(body, resolve.scope, file);
+    i = 0;
+    while i < check.errors.len() {
+        result = AnalysisResult(errors: result.errors.add(check.errors.get(i)), warnings: result.warnings);
+        i += 1;
+    }
+
+    # Mutability checking
+    MutResult mut = check_mut_block(body, file, resolve.scope);
+    i = 0;
+    while i < mut.errors.len() {
+        result = AnalysisResult(errors: result.errors.add(mut.errors.get(i)), warnings: result.warnings);
+        i += 1;
+    }
+
+    # Return enforcement
+    ReturnResult ret = check_fn_returns(fn_node, file);
+    i = 0;
+    while i < ret.errors.len() {
+        result = AnalysisResult(errors: result.errors.add(ret.errors.get(i)), warnings: result.warnings);
+        i += 1;
+    }
+
+    # Usage tracking and unused warnings
+    Scope tracked = track_block_usage(body, resolve.scope);
+    UsageResult used = warn_unused(tracked, file);
+    i = 0;
+    while i < used.warnings.len() {
+        result = AnalysisResult(errors: result.errors, warnings: result.warnings.add(used.warnings.get(i)));
+        i += 1;
+    }
+
+    return result;
+}
+
+# Analyse a full program node
+
+AnalysisResult analyse(Node program, string file) {
+    mutable AnalysisResult result = analysis_ok();
+    mutable Scope scope = new_scope();
+
+    # First pass — register all top-level function names
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            Node return_type = decl.children.get(0);
+            Symbol fn_sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(scope, decl.value) {
+                Span s = make_span(file, decl.line, decl.col, decl.value.len());
+                AnalysisError err = duplicate_function(decl.value, s);
+                result = AnalysisResult(errors: result.errors.add(err), warnings: result.warnings);
+            } else {
+                scope = declare_symbol(scope, fn_sym);
+            }
+        }
+        i += 1;
+    }
+
+    # Second pass — analyse each function body
+    i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            AnalysisResult fn_result = analyse_fn(decl, file, scope);
+            result = merge_analysis(result, fn_result);
+        }
+        i += 1;
+    }
+
+    return result;
+}

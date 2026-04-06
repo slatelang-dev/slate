@@ -1,0 +1,157 @@
+module mutability;
+
+use node;
+use symbols;
+use error;
+use span;
+
+# Mutability check result
+
+struct MutResult {
+    list(AnalysisError) errors;
+}
+
+MutResult mut_ok() {
+    return MutResult(errors: empty);
+}
+
+MutResult mut_err(AnalysisError err) {
+    return MutResult(errors: (err,));
+}
+
+MutResult merge_mut(MutResult a, MutResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    return MutResult(errors: errors);
+}
+
+# Check assignment target is mutable
+
+MutResult check_mutable_target(string name, int line, int col, string file, Scope scope) {
+    option(Symbol) sym = lookup_symbol(scope, name);
+    if sym.exists() == false {
+        return mut_ok();
+    }
+    Symbol s = sym.or(Symbol(
+        name: "", type_name: "unknown",
+        kind: SymbolKind.Variable,
+        initialized: false, used: false,
+        line: 0, col: 0
+    ));
+    if symbol_is_immutable(s) {
+        Span sp = make_span(file, line, col, name.len());
+        return mut_err(immutable_assignment(name, sp));
+    }
+    return mut_ok();
+}
+
+# Check definite initialization — variable used before assigned
+
+MutResult check_initialized(string name, int line, int col, string file, Scope scope) {
+    option(Symbol) sym = lookup_symbol(scope, name);
+    if sym.exists() == false {
+        return mut_ok();
+    }
+    Symbol s = sym.or(Symbol(
+        name: "", type_name: "unknown",
+        kind: SymbolKind.Variable,
+        initialized: false, used: false,
+        line: 0, col: 0
+    ));
+    if s.initialized == false and s.kind == SymbolKind.Variable {
+        Span sp = make_span(file, line, col, name.len());
+        return mut_err(uninitialized_variable(name, sp));
+    }
+    return mut_ok();
+}
+
+# Check an expression for mutability issues
+
+MutResult check_mut_expr(Node node, string file, Scope scope) {
+    if node.kind == NodeKind.Ident {
+        return check_initialized(node.value, node.line, node.col, file, scope);
+    }
+    if node.kind == NodeKind.BinaryOp or node.kind == NodeKind.UnaryOp {
+        mutable MutResult r = mut_ok();
+        mutable int i = 0;
+        while i < node.children.len() {
+            MutResult cr = check_mut_expr(node.children.get(i), file, scope);
+            r = merge_mut(r, cr);
+            i += 1;
+        }
+        return r;
+    }
+    if node.kind == NodeKind.Call or node.kind == NodeKind.MethodCall {
+        mutable MutResult r = mut_ok();
+        mutable int i = 0;
+        while i < node.children.len() {
+            MutResult cr = check_mut_expr(node.children.get(i), file, scope);
+            r = merge_mut(r, cr);
+            i += 1;
+        }
+        return r;
+    }
+    if node.kind == NodeKind.FieldAccess {
+        return check_mut_expr(node.children.get(0), file, scope);
+    }
+    if node.kind == NodeKind.Some or node.kind == NodeKind.Ok or node.kind == NodeKind.Error {
+        return check_mut_expr(node.children.get(0), file, scope);
+    }
+    return mut_ok();
+}
+
+# Check a statement for mutability issues
+
+MutResult check_mut_stmt(Node node, string file, Scope scope) {
+    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        MutResult target = check_mutable_target(node.value, node.line, node.col, file, scope);
+        MutResult val = check_mut_expr(node.children.get(0), file, scope);
+        return merge_mut(target, val);
+    }
+    if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
+    or node.kind == NodeKind.ConstDecl or node.kind == NodeKind.AffineDecl {
+        return check_mut_expr(node.children.get(1), file, scope);
+    }
+    if node.kind == NodeKind.Return {
+        if node.children.len() > 0 {
+            return check_mut_expr(node.children.get(0), file, scope);
+        }
+        return mut_ok();
+    }
+    if node.kind == NodeKind.If {
+        MutResult cond = check_mut_expr(node.children.get(0), file, scope);
+        MutResult then_r = check_mut_block(node.children.get(1), file, scope);
+        MutResult r = merge_mut(cond, then_r);
+        if node.children.len() > 2 {
+            MutResult else_r = check_mut_block(node.children.get(2), file, scope);
+            r = merge_mut(r, else_r);
+        }
+        return r;
+    }
+    if node.kind == NodeKind.While {
+        MutResult cond = check_mut_expr(node.children.get(0), file, scope);
+        MutResult body = check_mut_block(node.children.get(1), file, scope);
+        return merge_mut(cond, body);
+    }
+    if node.kind == NodeKind.Block {
+        return check_mut_block(node, file, scope);
+    }
+    return mut_ok();
+}
+
+# Check a block for mutability issues
+
+MutResult check_mut_block(Node block, string file, Scope scope) {
+    mutable MutResult r = mut_ok();
+    mutable int i = 0;
+    while i < block.children.len() {
+        MutResult sr = check_mut_stmt(block.children.get(i), file, scope);
+        r = merge_mut(r, sr);
+        i += 1;
+    }
+    return r;
+}

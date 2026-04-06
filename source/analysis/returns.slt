@@ -1,0 +1,116 @@
+module returns;
+
+use node;
+use error;
+use span;
+
+# Return check result
+
+struct ReturnResult {
+    list(AnalysisError) errors;
+    bool always_returns;
+}
+
+ReturnResult return_ok(bool always_returns) {
+    return ReturnResult(errors: empty, always_returns: always_returns);
+}
+
+ReturnResult return_err(AnalysisError err) {
+    return ReturnResult(errors: (err,), always_returns: false);
+}
+
+ReturnResult merge_return(ReturnResult a, ReturnResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    return ReturnResult(errors: errors, always_returns: a.always_returns or b.always_returns);
+}
+
+# Check if a block always returns
+
+ReturnResult check_block_returns(Node block, string fn_name, string return_type, string file) {
+    mutable ReturnResult r = return_ok(false);
+    mutable int i = 0;
+    while i < block.children.len() {
+        Node stmt = block.children.get(i);
+        ReturnResult sr = check_stmt_returns(stmt, fn_name, return_type, file);
+        r = merge_return(r, sr);
+        i += 1;
+    }
+    return r;
+}
+
+# Check if a statement always returns
+
+ReturnResult check_stmt_returns(Node node, string fn_name, string return_type, string file) {
+    if node.kind == NodeKind.Return {
+        if return_type == "void" and node.children.len() > 0 {
+            Span s = make_span(file, node.line, node.col, 6);
+            AnalysisError err = make_error(
+                ErrorKind.InvalidReturn,
+                "void function " + fn_name + " cannot return a value",
+                "Remove the return value or change the return type",
+                s
+            );
+            return return_err(err);
+        }
+        return return_ok(true);
+    }
+
+    if node.kind == NodeKind.If {
+        ReturnResult then_r = check_block_returns(node.children.get(1), fn_name, return_type, file);
+        if node.children.len() > 2 {
+            ReturnResult else_r = check_block_returns(node.children.get(2), fn_name, return_type, file);
+            mutable list(AnalysisError) errors = then_r.errors;
+            mutable int i = 0;
+            while i < else_r.errors.len() {
+                errors = errors.add(else_r.errors.get(i));
+                i += 1;
+            }
+            # Only always_returns if BOTH branches return
+            bool both_return = then_r.always_returns and else_r.always_returns;
+            return ReturnResult(errors: errors, always_returns: both_return);
+        }
+        return ReturnResult(errors: then_r.errors, always_returns: false);
+    }
+
+    if node.kind == NodeKind.While {
+        ReturnResult body = check_block_returns(node.children.get(1), fn_name, return_type, file);
+        # While loop doesn't guarantee return since condition might be false
+        return ReturnResult(errors: body.errors, always_returns: false);
+    }
+
+    if node.kind == NodeKind.Block {
+        return check_block_returns(node, fn_name, return_type, file);
+    }
+
+    return return_ok(false);
+}
+
+# Check a function declaration for return enforcement
+
+ReturnResult check_fn_returns(Node fn_node, string file) {
+    string fn_name = fn_node.value;
+    # Return type is first child, body is last child
+    Node return_type_node = fn_node.children.get(0);
+    string return_type = return_type_node.value;
+    Node body = fn_node.children.get(fn_node.children.len() - 1);
+
+    if return_type == "void" {
+        ReturnResult r = check_block_returns(body, fn_name, return_type, file);
+        return ReturnResult(errors: r.errors, always_returns: true);
+    }
+
+    ReturnResult r = check_block_returns(body, fn_name, return_type, file);
+
+    if r.always_returns == false {
+        Span s = make_span(file, fn_node.line, fn_node.col, fn_name.len());
+        AnalysisError err = missing_return(fn_name, return_type, s);
+        return merge_return(r, return_err(err));
+    }
+
+    return r;
+}
