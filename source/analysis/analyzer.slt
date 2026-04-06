@@ -1,4 +1,4 @@
-module core;
+module analyzer;
 
 use node;
 use symbols;

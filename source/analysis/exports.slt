@@ -10,4 +10,4 @@ use checker;
 use mutability;
 use returns;
 use usage;
-use core;
+use analyzer;
