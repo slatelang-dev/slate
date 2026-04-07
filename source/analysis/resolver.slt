@@ -159,9 +159,6 @@ ResolveResult resolve_stmt(Node node, string file, Scope scope) {
     if node.kind == NodeKind.Block {
         return resolve_block(node, file, scope);
     }
-    if node.kind == NodeKind.Expression {
-        return resolve_expr(node.children.get(0), file, scope);
-    }
     return empty_resolve_result(scope);
 }
 
