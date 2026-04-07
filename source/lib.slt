@@ -1,0 +1,8 @@
+module slate;
+
+use lexer;
+use ast;
+use parser;
+use analysis;
+use diagnostics;
+use ink;
