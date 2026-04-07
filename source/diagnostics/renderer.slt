@@ -1,0 +1,121 @@
+module renderer;
+
+use error;
+use warning;
+use span;
+use ink;
+
+# Render a single line of source with a caret pointing at the error
+
+string render_caret(int col, int length) {
+    mutable string spaces = "";
+    mutable int i = 0;
+    while i < col - 1 {
+        spaces = spaces + " ";
+        i += 1;
+    }
+    mutable string carets = "";
+    i = 0;
+    while i < length {
+        carets = carets + "^";
+        i += 1;
+    }
+    return spaces + red(carets);
+}
+
+# Render a source excerpt — file, line number, source line, caret
+
+string render_source(Span s, string source) {
+    mutable string result = "";
+    list(string) lines = source.split("\n");
+    if s.line > 0 and s.line <= lines.len() {
+        string src_line = lines.get(s.line - 1);
+        string line_num = string(s.line);
+        result = result + gray(" " + line_num + " │ ") + src_line + "\n";
+        result = result + gray("   │ ") + render_caret(s.col, s.length);
+    }
+    return result;
+}
+
+# Render the location header — file:line:col
+
+string render_location(Span s) {
+    return gray("  ╭─[ ") + slate(s.file + ":" + string(s.line) + ":" + string(s.col)) + gray(" ]");
+}
+
+# Render a single error
+
+string render_error(AnalysisError err, string source) {
+    mutable string out = "";
+    out = out + bold_red("Error") + gray(": ") + err.message + "\n";
+    out = out + render_location(err.location) + "\n";
+    out = out + gray("  │\n");
+    out = out + render_source(err.location, source) + "\n";
+    out = out + gray("  │\n");
+    out = out + gray("  ╰── ") + yellow(err.hint) + "\n";
+    return out;
+}
+
+# Render a single warning
+
+string render_warning(AnalysisWarning warn, string source) {
+    mutable string out = "";
+    out = out + bold_yellow("Warning") + gray(": ") + warn.message + "\n";
+    out = out + render_location(warn.location) + "\n";
+    out = out + gray("  │\n");
+    out = out + render_source(warn.location, source) + "\n";
+    out = out + gray("  │\n");
+    out = out + gray("  ╰── ") + gray(warn.hint) + "\n";
+    return out;
+}
+
+# Render all errors and warnings from an analysis result
+
+string render_errors(list(AnalysisError) errors, string source) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < errors.len() {
+        out = out + render_error(errors.get(i), source) + "\n";
+        i += 1;
+    }
+    return out;
+}
+
+string render_warnings(list(AnalysisWarning) warnings, string source) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < warnings.len() {
+        out = out + render_warning(warnings.get(i), source) + "\n";
+        i += 1;
+    }
+    return out;
+}
+
+# Render a summary line
+
+string render_summary(list(AnalysisError) errors, list(AnalysisWarning) warnings) {
+    mutable string out = "";
+    if errors.len() > 0 {
+        out = out + bold_red(string(errors.len()) + " error(s)");
+    }
+    if errors.len() > 0 and warnings.len() > 0 {
+        out = out + gray(", ");
+    }
+    if warnings.len() > 0 {
+        out = out + bold_yellow(string(warnings.len()) + " warning(s)");
+    }
+    if errors.len() == 0 and warnings.len() == 0 {
+        out = bold_green("✓ No errors");
+    }
+    return out;
+}
+
+# Full render — warnings first, then errors, then summary
+
+string render_all(list(AnalysisError) errors, list(AnalysisWarning) warnings, string source) {
+    mutable string out = "";
+    out = out + render_warnings(warnings, source);
+    out = out + render_errors(errors, source);
+    out = out + render_summary(errors, warnings) + "\n";
+    return out;
+}

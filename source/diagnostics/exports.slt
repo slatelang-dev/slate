@@ -3,3 +3,4 @@ module diagnostics;
 use span;
 use error;
 use warning;
+use renderer;
