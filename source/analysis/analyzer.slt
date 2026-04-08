@@ -81,10 +81,10 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
     }
 
     # Mutability checking
-    MutResult mut = check_mut_block(body, file, resolve.scope);
+    MutResult mut_result = check_mut_block(body, file, resolve.scope);
     i = 0;
-    while i < mut.errors.len() {
-        result = AnalysisResult(errors: result.errors.add(mut.errors.get(i)), warnings: result.warnings);
+    while i < mut_result.errors.len() {
+        result = AnalysisResult(errors: result.errors.add(mut_result.errors.get(i)), warnings: result.warnings);
         i += 1;
     }
 

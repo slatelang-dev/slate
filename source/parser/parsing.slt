@@ -76,7 +76,7 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
         if after_rparen == -1 {
             return parse_err(expect_error(") after error argument", tokens, inner.pos), inner.pos);
         }
-        return parse_ok(make_error(inner.node, line, col), after_rparen);
+        return parse_ok(make_error_expr(inner.node, line, col), after_rparen);
     }
 
     if t.kind == TokenKind.LParen {

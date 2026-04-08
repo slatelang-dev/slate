@@ -81,7 +81,7 @@ Node make_ok(Node inner, int line, int col) {
     return Node(kind: NodeKind.Ok, value: "", line: line, col: col, children: (inner,));
 }
 
-Node make_error(Node inner, int line, int col) {
+Node make_error_expr(Node inner, int line, int col) {
     return Node(kind: NodeKind.Error, value: "", line: line, col: col, children: (inner,));
 }
 
