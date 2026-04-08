@@ -52,6 +52,7 @@ bool types_compatible(string expected, string got) {
     if expected == got          { return true; }
     if expected == "unknown"    { return true; }
     if got == "unknown"         { return true; }
+    if got == "void"    { return true; }
     if expected == "option"     { return got == "option" or got == "none"; }
     if expected == "result"     { return got == "result"; }
     if expected == "float" and got == "int" { return true; }
