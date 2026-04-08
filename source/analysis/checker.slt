@@ -67,7 +67,7 @@ CheckResult check_var_decl(Node node, Scope scope, string file) {
     CheckResult init_check = check_expr(init_expr, scope, file);
 
     if init_check.inferred_type == "unknown" {
-        return init_check;
+        return check_ok(declared_type);
     }
 
     if types_compatible(declared_type, init_check.inferred_type) == false {
