@@ -125,7 +125,7 @@ MutResult check_mut_stmt(Node node, string file, Scope scope) {
     if node.kind == NodeKind.If {
         MutResult cond = check_mut_expr(node.children.get(0), file, scope);
         MutResult then_r = check_mut_block(node.children.get(1), file, scope);
-        MutResult r = merge_mut(cond, then_r);
+        mutable MutResult r = merge_mut(cond, then_r);
         if node.children.len() > 2 {
             MutResult else_r = check_mut_block(node.children.get(2), file, scope);
             r = merge_mut(r, else_r);

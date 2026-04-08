@@ -89,7 +89,7 @@ ResolveResult resolve_expr(Node node, string file, Scope scope) {
         return resolve_ident(node.value, node.line, node.col, file, scope);
     }
     if node.kind == NodeKind.Call {
-        ResolveResult r = resolve_call(node.value, node.children.len(), node.line, node.col, file, scope);
+        mutable ResolveResult r = resolve_call(node.value, node.children.len(), node.line, node.col, file, scope);
         mutable int i = 0;
         while i < node.children.len() {
             ResolveResult arg_r = resolve_expr(node.children.get(i), file, r.scope);
@@ -143,7 +143,7 @@ ResolveResult resolve_stmt(Node node, string file, Scope scope) {
         ResolveResult cond_r = resolve_expr(node.children.get(0), file, scope);
         Scope inner = push_scope(cond_r.scope);
         ResolveResult then_r = resolve_block(node.children.get(1), file, inner);
-        ResolveResult r = merge_results(cond_r, then_r);
+        mutable ResolveResult r = merge_results(cond_r, then_r);
         if node.children.len() > 2 {
             ResolveResult else_r = resolve_block(node.children.get(2), file, push_scope(r.scope));
             r = merge_results(r, else_r);
