@@ -52,7 +52,16 @@ ResolveResult resolve_ident(string name, int line, int col, string file, Scope s
 
 # Resolve a function call — check function exists and arg count matches
 
+bool is_builtin(string name) {
+    return name == "input" or name == "print" or name == "file"
+        or name == "run" or name == "read" or name == "string"
+        or name == "int" or name == "float" or name == "bool";
+}
+
 ResolveResult resolve_call(string name, int arg_count, int line, int col, string file, Scope scope) {
+    if is_builtin(name) {
+        return empty_resolve_result(scope);
+    }
     option(Symbol) sym = lookup_symbol(scope, name);
     if sym.exists() == false {
         Span s = make_span(file, line, col, name.len());

@@ -27,7 +27,7 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
         name: name,
         type_name: type_name,
         kind: kind,
-        initialized: false,
+        initialized: true,
         used: false,
         line: line,
         col: col
