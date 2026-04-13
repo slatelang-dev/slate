@@ -154,15 +154,70 @@ list(string) module_functions(string name) {
     return empty;
 }
 
+list(string) module_types(string name) {
+    if name == "lexer" or name == "token" {
+        return ("Token", "TokenKind");
+    }
+    if name == "ast" or name == "node" {
+        return ("Node", "NodeKind");
+    }
+    if name == "parser" or name == "state" {
+        return ("ParseResult",);
+    }
+    if name == "analysis" or name == "symbols" {
+        return ("Symbol", "SymbolKind", "Scope");
+    }
+    if name == "analysis" or name == "resolver" {
+        return ("ResolveResult",);
+    }
+    if name == "analysis" or name == "checker" {
+        return ("CheckResult",);
+    }
+    if name == "analysis" or name == "mutability" {
+        return ("MutResult",);
+    }
+    if name == "analysis" or name == "returns" {
+        return ("ReturnResult",);
+    }
+    if name == "analysis" or name == "usage" {
+        return ("UsageResult",);
+    }
+    if name == "analysis" or name == "analyzer" {
+        return ("AnalysisResult",);
+    }
+    if name == "diagnostics" or name == "error" {
+        return ("AnalysisError", "ErrorKind");
+    }
+    if name == "diagnostics" or name == "warning" {
+        return ("AnalysisWarning", "WarnKind");
+    }
+    if name == "diagnostics" or name == "span" {
+        return ("Span",);
+    }
+    if name == "protocol" or name == "lsp_types" {
+        return ("Position", "Range", "LspDiagnostic");
+    }
+    return empty;
+}
+
 # Register all functions from a module into scope
 
 Scope register_module(string name, Scope scope) {
     list(string) fns = module_functions(name);
+    list(string) types = module_types(name);
     mutable Scope s = scope;
     mutable int i = 0;
     while i < fns.len() {
         Symbol sym = make_fn_symbol(fns.get(i), "unknown", 0, 0);
         if symbol_exists_in_current_scope(s, fns.get(i)) == false {
+            s = declare_symbol(s, sym);
+        }
+        i += 1;
+    }
+    i = 0;
+    while i < types.len() {
+        Symbol sym = make_fn_symbol(types.get(i), "unknown", 0, 0);
+        if symbol_exists_in_current_scope(s, types.get(i)) == false {
             s = declare_symbol(s, sym);
         }
         i += 1;

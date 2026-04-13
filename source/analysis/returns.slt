@@ -83,6 +83,30 @@ ReturnResult check_stmt_returns(Node node, string fn_name, string return_type, s
         return ReturnResult(errors: body.errors, always_returns: false);
     }
 
+    if node.kind == NodeKind.Match {
+        mutable bool all_return = true;
+        mutable bool has_else = false;
+        mutable list(AnalysisError) errors = empty;
+        mutable int i = 1;
+        while i < node.children.len() {
+            Node arm = node.children.get(i);
+            if arm.value == "else" {
+                has_else = true;
+            }
+            ReturnResult arm_r = check_block_returns(arm.children.get(arm.children.len() - 1), fn_name, return_type, file);
+            mutable int j = 0;
+            while j < arm_r.errors.len() {
+                errors = errors.add(arm_r.errors.get(j));
+                j += 1;
+            }
+            if arm_r.always_returns == false {
+                all_return = false;
+            }
+            i += 1;
+        }
+        return ReturnResult(errors: errors, always_returns: all_return and has_else);
+    }
+
     if node.kind == NodeKind.Block {
         return check_block_returns(node, fn_name, return_type, file);
     }

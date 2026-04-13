@@ -167,6 +167,41 @@ ResolveResult resolve_stmt(Node node, string file, Scope scope) {
         ResolveResult body_r = resolve_block(node.children.get(1), file, inner);
         return merge_results(cond_r, body_r);
     }
+    if node.kind == NodeKind.For {
+        ResolveResult start_r = resolve_expr(node.children.get(0), file, scope);
+        ResolveResult end_r = resolve_expr(node.children.get(1), file, start_r.scope);
+        Scope inner = push_scope(end_r.scope);
+        ResolveResult decl = declare_var(node.value, "int", NodeKind.VarDecl, node.line, node.col, file, inner);
+        ResolveResult body_r = resolve_block(node.children.get(2), file, decl.scope);
+        return merge_results(merge_results(start_r, end_r), merge_results(decl, body_r));
+    }
+    if node.kind == NodeKind.ForIn {
+        ResolveResult iter_r = resolve_expr(node.children.get(0), file, scope);
+        Scope inner = push_scope(iter_r.scope);
+        ResolveResult decl = declare_var(node.value, "unknown", NodeKind.VarDecl, node.line, node.col, file, inner);
+        ResolveResult body_r = resolve_block(node.children.get(1), file, decl.scope);
+        return merge_results(iter_r, merge_results(decl, body_r));
+    }
+    if node.kind == NodeKind.Match {
+        ResolveResult val_r = resolve_expr(node.children.get(0), file, scope);
+        mutable ResolveResult r = val_r;
+        mutable int i = 1;
+        while i < node.children.len() {
+            Node arm = node.children.get(i);
+            Scope inner = push_scope(r.scope);
+            mutable ResolveResult arm_r = empty_resolve_result(inner);
+            if arm.value == "expr" {
+                arm_r = resolve_expr(arm.children.get(0), file, inner);
+                ResolveResult body_r = resolve_block(arm.children.get(arm.children.len() - 1), file, arm_r.scope);
+                arm_r = merge_results(arm_r, body_r);
+            } else {
+                arm_r = resolve_block(arm.children.get(arm.children.len() - 1), file, inner);
+            }
+            r = merge_results(r, arm_r);
+            i += 1;
+        }
+        return r;
+    }
     if node.kind == NodeKind.Block {
         return resolve_block(node, file, scope);
     }
