@@ -318,10 +318,8 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
 # Analyse a full program node
 
 AnalysisResult analyse(Node program, string file) {
-    mutable AnalysisResult result = analysis_ok();
-    mutable Scope scope = new_scope();
-
-    # Zero-th pass — register functions from imported modules
+    AnalysisResult result = analysis_ok();
+    Scope scope = new_scope();
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
@@ -330,8 +328,6 @@ AnalysisResult analyse(Node program, string file) {
         }
         i += 1;
     }
-
-    # First pass — register all top-level function names
     i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
