@@ -151,6 +151,24 @@ list(string) module_functions(string name) {
             "cmd_tidy", "cmd_new", "cmd_add", "cmd_remove", "cmd_sync",
             "cmd_update", "cmd_docs", "cmd_info", "cmd_help", "cmd_clean");
     }
+    if name == "compiler" or name == "codegen" or name == "walker" or name == "lower_expr"
+    or name == "emitter" or name == "emit_types" or name == "emit_expr" or name == "emit_stmt" {
+        return ("walk_program", "walk_fn", "walk_block", "walk_stmt", "walk_expr",
+            "new_emitter", "emit_line", "next_reg", "advance_reg", "next_label",
+            "advance_label", "set_fn", "emit_error", "emitter_has_errors",
+            "emit_file_header", "emit_fn_header", "emit_fn_footer",
+            "emit_var_decl", "emit_assign", "emit_return", "emit_if",
+            "emit_then_block", "emit_else_block", "emit_merge_block",
+            "emit_jump", "emit_while_start", "emit_while_body", "emit_while_end",
+            "emit_binary_op", "emit_unary_op", "emit_call", "emit_load",
+            "emit_store", "emit_alloca", "llvm_type", "is_primitive_call",
+            "emit_primitive_call");
+    }
+    if name == "loader" or name == "project" or name == "modules" {
+        return ("load_project_file", "load_project", "load_entry", "load_module",
+            "load_all_modules", "all_modules_ok", "first_module_error",
+            "project_valid", "project_display", "make_project");
+    }
     return empty;
 }
 
@@ -196,6 +214,13 @@ list(string) module_types(string name) {
     }
     if name == "protocol" or name == "lsp_types" {
         return ("Position", "Range", "LspDiagnostic");
+    }
+    if name == "compiler" or name == "codegen" or name == "walker" or name == "lower_expr"
+    or name == "emitter" or name == "emit_stmt" {
+        return ("Emitter", "EmitResult");
+    }
+    if name == "compiler" or name == "loader" or name == "project" or name == "modules" {
+        return ("Project", "LoadedModule");
     }
     return empty;
 }
