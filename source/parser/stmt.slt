@@ -28,7 +28,7 @@ ParseResult parse_var_decl(list(Token) tokens, int pos) {
     }
 
     ParseResult type_result = parse_type(tokens, cur);
-    if type_result.ok == false { return type_result; }
+    if type_result.success == false { return type_result; }
     cur = type_result.pos;
 
     Token name_tok = tokens.get(cur);
@@ -44,7 +44,7 @@ ParseResult parse_var_decl(list(Token) tokens, int pos) {
     }
 
     ParseResult init = parse_expr(tokens, after_assign);
-    if init.ok == false { return init; }
+    if init.success == false { return init; }
 
     int after_semi = expect_semicolon(tokens, init.pos);
     if after_semi == -1 {
@@ -78,7 +78,7 @@ ParseResult parse_assign(list(Token) tokens, int pos) {
     if op_tok.kind == TokenKind.Assign {
         cur = cur + 1;
         ParseResult val = parse_expr(tokens, cur);
-        if val.ok == false { return val; }
+        if val.success == false { return val; }
         int after_semi = expect_semicolon(tokens, val.pos);
         if after_semi == -1 {
             return parse_err(expect_error("; after assignment", tokens, val.pos), val.pos);
@@ -94,7 +94,7 @@ ParseResult parse_assign(list(Token) tokens, int pos) {
     if op != "" {
         cur = cur + 1;
         ParseResult val = parse_expr(tokens, cur);
-        if val.ok == false { return val; }
+        if val.success == false { return val; }
         int after_semi = expect_semicolon(tokens, val.pos);
         if after_semi == -1 {
             return parse_err(expect_error("; after assignment", tokens, val.pos), val.pos);
@@ -115,7 +115,7 @@ ParseResult parse_return(list(Token) tokens, int pos) {
         return parse_ok(make_return(empty, line, col), cur + 1);
     }
     ParseResult val = parse_expr(tokens, cur);
-    if val.ok == false { return val; }
+    if val.success == false { return val; }
     int after_semi = expect_semicolon(tokens, val.pos);
     if after_semi == -1 {
         return parse_err(expect_error("; after return", tokens, val.pos), val.pos);
@@ -162,7 +162,7 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
     }
 
     ParseResult er = parse_expr(tokens, pos);
-    if er.ok == false { return er; }
+    if er.success == false { return er; }
     int after_semi = expect_semicolon(tokens, er.pos);
     if after_semi == -1 {
         return parse_err(expect_error("; after expression statement", tokens, er.pos), er.pos);
@@ -187,7 +187,7 @@ ParseResult parse_block(list(Token) tokens, int pos) {
             return parse_err("unexpected end of file in block", cur);
         } else {
             ParseResult sr = parse_stmt(tokens, cur);
-            if sr.ok == false { return sr; }
+            if sr.success == false { return sr; }
             stmts = stmts.add(sr.node);
             cur = sr.pos;
         }

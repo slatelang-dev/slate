@@ -13,7 +13,7 @@ ParseResult parse_param(list(Token) tokens, int pos) {
     int line = tokens.get(pos).line;
     int col = tokens.get(pos).col;
     ParseResult type_result = parse_type(tokens, pos);
-    if type_result.ok == false { return type_result; }
+    if type_result.success == false { return type_result; }
     Token name_tok = tokens.get(type_result.pos);
     if name_tok.kind != TokenKind.Ident {
         return parse_err(expect_error("parameter name", tokens, type_result.pos), type_result.pos);
@@ -38,7 +38,7 @@ ParseResult parse_params(list(Token) tokens, int pos) {
             running = false;
         } else {
             ParseResult param = parse_param(tokens, cur);
-            if param.ok == false { return param; }
+            if param.success == false { return param; }
             params = params.add(param.node);
             cur = param.pos;
             if check(tokens, cur, TokenKind.Comma) {
@@ -67,7 +67,7 @@ ParseResult parse_fn_decl(list(Token) tokens, int pos) {
     }
 
     ParseResult return_type = parse_type(tokens, cur);
-    if return_type.ok == false { return return_type; }
+    if return_type.success == false { return return_type; }
     cur = return_type.pos;
 
     Token name_tok = tokens.get(cur);
@@ -78,11 +78,11 @@ ParseResult parse_fn_decl(list(Token) tokens, int pos) {
     cur = cur + 1;
 
     ParseResult params = parse_params(tokens, cur);
-    if params.ok == false { return params; }
+    if params.success == false { return params; }
     cur = params.pos;
 
     ParseResult body = parse_block(tokens, cur);
-    if body.ok == false { return body; }
+    if body.success == false { return body; }
 
     return parse_ok(make_fn_decl(fn_name, return_type.node, params.node.children, body.node, line, col), body.pos);
 }

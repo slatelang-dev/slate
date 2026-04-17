@@ -57,7 +57,7 @@ ParseResult parse_program(list(Token) tokens) {
             # struct declaration
             else if t.kind == TokenKind.Struct {
                 ParseResult result = parse_struct_decl(tokens, cur);
-                if result.ok == false { return result; }
+                if result.success == false { return result; }
                 decls = decls.add(result.node);
                 cur = result.pos;
             }
@@ -65,7 +65,7 @@ ParseResult parse_program(list(Token) tokens) {
             # enum declaration
             else if t.kind == TokenKind.Enum {
                 ParseResult result = parse_enum_decl(tokens, cur);
-                if result.ok == false { return result; }
+                if result.success == false { return result; }
                 decls = decls.add(result.node);
                 cur = result.pos;
             }
@@ -75,17 +75,17 @@ ParseResult parse_program(list(Token) tokens) {
                 Token next = tokens.get(cur + 1);
                 if next.kind == TokenKind.Struct {
                     ParseResult result = parse_struct_decl(tokens, cur);
-                    if result.ok == false { return result; }
+                    if result.success == false { return result; }
                     decls = decls.add(result.node);
                     cur = result.pos;
                 } else if next.kind == TokenKind.Enum {
                     ParseResult result = parse_enum_decl(tokens, cur);
-                    if result.ok == false { return result; }
+                    if result.success == false { return result; }
                     decls = decls.add(result.node);
                     cur = result.pos;
                 } else {
                     ParseResult result = parse_fn_decl(tokens, cur);
-                    if result.ok == false { return result; }
+                    if result.success == false { return result; }
                     decls = decls.add(result.node);
                     cur = result.pos;
                 }
@@ -94,7 +94,7 @@ ParseResult parse_program(list(Token) tokens) {
             # function declaration — type followed by ident followed by (
             else {
                 ParseResult result = parse_fn_decl(tokens, cur);
-                if result.ok == false { return result; }
+                if result.success == false { return result; }
                 decls = decls.add(result.node);
                 cur = result.pos;
             }

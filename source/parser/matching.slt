@@ -14,7 +14,7 @@ ParseResult parse_match(list(Token) tokens, int pos) {
     mutable int cur = pos + 1;
 
     ParseResult val = parse_expr(tokens, cur);
-    if val.ok == false { return val; }
+    if val.success == false { return val; }
     cur = val.pos;
 
     int after_lbrace = expect_lbrace(tokens, cur);
@@ -54,7 +54,7 @@ ParseResult parse_match(list(Token) tokens, int pos) {
                 cur = cur + 1;
             } else {
                 ParseResult pat = parse_expr(tokens, cur);
-                if pat.ok == false { return pat; }
+                if pat.success == false { return pat; }
                 arm_children = arm_children.add(pat.node);
                 cur = pat.pos;
             }
@@ -66,7 +66,7 @@ ParseResult parse_match(list(Token) tokens, int pos) {
             cur = after_colon;
 
             ParseResult arm_body = parse_block(tokens, cur);
-            if arm_body.ok == false { return arm_body; }
+            if arm_body.success == false { return arm_body; }
             arm_children = arm_children.add(arm_body.node);
             cur = arm_body.pos;
 

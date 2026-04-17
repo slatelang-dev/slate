@@ -92,21 +92,3 @@ list(int) advance_past_symbol(string source, list(int) state, string sym) {
     }
     return s;
 }
-
-list(int) string_end_state(string source, list(int) state) {
-    mutable list(int) s = advance(source, state);
-    mutable bool running = true;
-    while running {
-        string ch = current_char(source, s);
-        if ch == "\"" or ch == "" {
-            running = false;
-        } else if ch == "\\" {
-            s = advance(source, s);
-            s = advance(source, s);
-        } else {
-            s = advance(source, s);
-        }
-    }
-    s = advance(source, s);
-    return s;
-}

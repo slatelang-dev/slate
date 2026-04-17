@@ -4,26 +4,26 @@ use token;
 use node;
 
 # ParseResult — returned by every parse function
-# ok: true = success, false = failure
-# error: message on failure, "" on success
+# success: true = success, false = failure
+# message: message on failure, "" on success
 # pos: token position after parsing
 
 struct ParseResult {
     Node node;
     int pos;
-    bool ok;
-    string error;
+    bool success;
+    string message;
 }
 
 # Constructors
 
 ParseResult parse_ok(Node node, int pos) {
-    return ParseResult(node: node, pos: pos, ok: true, error: "");
+    return ParseResult(node: node, pos: pos, success: true, message: "");
 }
 
-ParseResult parse_err(string error, int pos) {
+ParseResult parse_err(string msg, int pos) {
     Node empty_node = Node(kind: NodeKind.Program, value: "", line: 0, col: 0, children: empty);
-    return ParseResult(node: empty_node, pos: pos, ok: false, error: error);
+    return ParseResult(node: empty_node, pos: pos, success: false, message: msg);
 }
 
 # Token access helpers — thin wrappers so parser functions stay readable

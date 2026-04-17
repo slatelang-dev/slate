@@ -14,7 +14,7 @@ ParseResult parse_field(list(Token) tokens, int pos) {
     int line = tokens.get(pos).line;
     int col = tokens.get(pos).col;
     ParseResult type_result = parse_type(tokens, pos);
-    if type_result.ok == false { return type_result; }
+    if type_result.success == false { return type_result; }
     Token name_tok = tokens.get(type_result.pos);
     if name_tok.kind != TokenKind.Ident {
         return parse_err(expect_error("field name", tokens, type_result.pos), type_result.pos);
@@ -60,15 +60,15 @@ ParseResult parse_struct_decl(list(Token) tokens, int pos) {
             return parse_err("unexpected end of file in struct", cur);
         } else {
             ParseResult type_result = parse_type(tokens, cur);
-            if type_result.ok == false { return type_result; }
+            if type_result.success == false { return type_result; }
             if check(tokens, type_result.pos + 1, TokenKind.LParen) {
                 ParseResult method = parse_fn_decl(tokens, cur);
-                if method.ok == false { return method; }
+                if method.success == false { return method; }
                 members = members.add(method.node);
                 cur = method.pos;
             } else {
                 ParseResult field = parse_field(tokens, cur);
-                if field.ok == false { return field; }
+                if field.success == false { return field; }
                 members = members.add(field.node);
                 cur = field.pos;
             }
@@ -97,7 +97,7 @@ ParseResult parse_variant(list(Token) tokens, int pos) {
 
     if check(tokens, cur, TokenKind.LParen) {
         ParseResult payload_type = parse_type(tokens, cur + 1);
-        if payload_type.ok == false { return payload_type; }
+        if payload_type.success == false { return payload_type; }
         payload = payload.add(payload_type.node);
         int after_rparen = expect_rparen(tokens, payload_type.pos);
         if after_rparen == -1 {
@@ -143,7 +143,7 @@ ParseResult parse_enum_decl(list(Token) tokens, int pos) {
             return parse_err("unexpected end of file in enum", cur);
         } else {
             ParseResult variant = parse_variant(tokens, cur);
-            if variant.ok == false { return variant; }
+            if variant.success == false { return variant; }
             variants = variants.add(variant.node);
             cur = variant.pos;
             if check(tokens, cur, TokenKind.Comma) {

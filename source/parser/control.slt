@@ -14,11 +14,11 @@ ParseResult parse_if(list(Token) tokens, int pos) {
     mutable int cur = pos + 1;
 
     ParseResult cond = parse_expr(tokens, cur);
-    if cond.ok == false { return cond; }
+    if cond.success == false { return cond; }
     cur = cond.pos;
 
     ParseResult then_block = parse_block(tokens, cur);
-    if then_block.ok == false { return then_block; }
+    if then_block.success == false { return then_block; }
     cur = then_block.pos;
 
     mutable list(Node) else_children = empty;
@@ -26,12 +26,12 @@ ParseResult parse_if(list(Token) tokens, int pos) {
         cur = cur + 1;
         if check(tokens, cur, TokenKind.If) {
             ParseResult else_if = parse_if(tokens, cur);
-            if else_if.ok == false { return else_if; }
+            if else_if.success == false { return else_if; }
             else_children = else_children.add(else_if.node);
             cur = else_if.pos;
         } else {
             ParseResult else_block = parse_block(tokens, cur);
-            if else_block.ok == false { return else_block; }
+            if else_block.success == false { return else_block; }
             else_children = else_children.add(else_block.node);
             cur = else_block.pos;
         }
@@ -48,11 +48,11 @@ ParseResult parse_while(list(Token) tokens, int pos) {
     mutable int cur = pos + 1;
 
     ParseResult cond = parse_expr(tokens, cur);
-    if cond.ok == false { return cond; }
+    if cond.success == false { return cond; }
     cur = cond.pos;
 
     ParseResult body = parse_block(tokens, cur);
-    if body.ok == false { return body; }
+    if body.success == false { return body; }
 
     return parse_ok(make_while(cond.node, body.node, line, col), body.pos);
 }
@@ -83,25 +83,25 @@ ParseResult parse_for(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after range", tokens, cur + 1), cur + 1);
         }
         ParseResult start_expr = parse_expr(tokens, after_lparen);
-        if start_expr.ok == false { return start_expr; }
+        if start_expr.success == false { return start_expr; }
         int after_comma = expect_comma(tokens, start_expr.pos);
         if after_comma == -1 {
             return parse_err(expect_error(", in range", tokens, start_expr.pos), start_expr.pos);
         }
         ParseResult end_expr = parse_expr(tokens, after_comma);
-        if end_expr.ok == false { return end_expr; }
+        if end_expr.success == false { return end_expr; }
         int after_rparen = expect_rparen(tokens, end_expr.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after range", tokens, end_expr.pos), end_expr.pos);
         }
         ParseResult body = parse_block(tokens, after_rparen);
-        if body.ok == false { return body; }
+        if body.success == false { return body; }
         return parse_ok(make_for(var_name, start_expr.node, end_expr.node, body.node, line, col), body.pos);
     }
 
     ParseResult iterable = parse_expr(tokens, cur);
-    if iterable.ok == false { return iterable; }
+    if iterable.success == false { return iterable; }
     ParseResult body = parse_block(tokens, iterable.pos);
-    if body.ok == false { return body; }
+    if body.success == false { return body; }
     return parse_ok(make_for_in(var_name, iterable.node, body.node, line, col), body.pos);
 }

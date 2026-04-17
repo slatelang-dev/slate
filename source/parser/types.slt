@@ -43,7 +43,7 @@ ParseResult parse_type(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after option", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_type(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after option type", tokens, inner.pos), inner.pos);
@@ -57,7 +57,7 @@ ParseResult parse_type(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after result", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_type(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after result type", tokens, inner.pos), inner.pos);
@@ -71,7 +71,7 @@ ParseResult parse_type(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after list", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_type(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after list type", tokens, inner.pos), inner.pos);
@@ -85,13 +85,13 @@ ParseResult parse_type(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after table", tokens, pos + 1), pos);
         }
         ParseResult key = parse_type(tokens, after_lparen);
-        if key.ok == false { return key; }
+        if key.success == false { return key; }
         int after_comma = expect_comma(tokens, key.pos);
         if after_comma == -1 {
             return parse_err(expect_error(", in table type", tokens, key.pos), key.pos);
         }
         ParseResult val = parse_type(tokens, after_comma);
-        if val.ok == false { return val; }
+        if val.success == false { return val; }
         int after_rparen = expect_rparen(tokens, val.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after table type", tokens, val.pos), val.pos);

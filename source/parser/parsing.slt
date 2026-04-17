@@ -43,7 +43,7 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after some", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_expr(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after some argument", tokens, inner.pos), inner.pos);
@@ -57,7 +57,7 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after ok", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_expr(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after ok argument", tokens, inner.pos), inner.pos);
@@ -71,7 +71,7 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
             return parse_err(expect_error("( after error", tokens, pos + 1), pos);
         }
         ParseResult inner = parse_expr(tokens, after_lparen);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(") after error argument", tokens, inner.pos), inner.pos);
@@ -81,7 +81,7 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
 
     if t.kind == TokenKind.LParen {
         ParseResult inner = parse_expr(tokens, pos + 1);
-        if inner.ok == false { return inner; }
+        if inner.success == false { return inner; }
         int after_rparen = expect_rparen(tokens, inner.pos);
         if after_rparen == -1 {
             return parse_err(expect_error(")", tokens, inner.pos), inner.pos);
@@ -114,7 +114,7 @@ ParseResult parse_args(list(Token) tokens, int pos) {
             running = false;
         } else {
             ParseResult arg = parse_expr(tokens, cur);
-            if arg.ok == false { return arg; }
+            if arg.success == false { return arg; }
             args = args.add(arg.node);
             cur = arg.pos;
             if check(tokens, cur, TokenKind.Comma) {
@@ -137,13 +137,13 @@ ParseResult parse_call(list(Token) tokens, int pos) {
     int line = t.line;
     int col = t.col;
     ParseResult args_result = parse_args(tokens, pos + 1);
-    if args_result.ok == false { return args_result; }
+    if args_result.success == false { return args_result; }
     return parse_ok(make_call(name, args_result.node.children, line, col), args_result.pos);
 }
 
 ParseResult parse_postfix(list(Token) tokens, int pos) {
     ParseResult result = parse_primary(tokens, pos);
-    if result.ok == false { return result; }
+    if result.success == false { return result; }
     mutable Node node = result.node;
     mutable int cur = result.pos;
     mutable bool running = true;
@@ -158,7 +158,7 @@ ParseResult parse_postfix(list(Token) tokens, int pos) {
             string member = member_tok.value;
             if check(tokens, cur + 1 + 1, TokenKind.LParen) {
                 ParseResult args_result = parse_args(tokens, cur + 1 + 1);
-                if args_result.ok == false { return args_result; }
+                if args_result.success == false { return args_result; }
                 node = make_method_call(member, node, args_result.node.children, line, col);
                 cur = args_result.pos;
             } else {
@@ -184,12 +184,12 @@ ParseResult parse_unary(list(Token) tokens, int pos) {
     int col = t.col;
     if t.kind == TokenKind.Not {
         ParseResult operand = parse_unary(tokens, pos + 1);
-        if operand.ok == false { return operand; }
+        if operand.success == false { return operand; }
         return parse_ok(make_unary_op("not", operand.node, line, col), operand.pos);
     }
     if t.kind == TokenKind.Minus {
         ParseResult operand = parse_unary(tokens, pos + 1);
-        if operand.ok == false { return operand; }
+        if operand.success == false { return operand; }
         return parse_ok(make_unary_op("-", operand.node, line, col), operand.pos);
     }
     return parse_postfix(tokens, pos);
