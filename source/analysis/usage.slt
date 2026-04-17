@@ -44,6 +44,7 @@ Scope mark_used(string name, Scope scope) {
                 kind: sym.kind,
                 initialized: sym.initialized,
                 used: true,
+                scope_depth: sym.scope_depth,
                 line: sym.line,
                 col: sym.col
             );
@@ -145,7 +146,7 @@ UsageResult warn_unused(Scope scope, string file) {
     mutable int i = 0;
     while i < scope.symbols.len() {
         Symbol sym = scope.symbols.get(i);
-        if sym.used == false and sym.line == scope.depth {
+        if sym.used == false and sym.scope_depth == scope.depth {
             if sym.name.starts_with("_") == false {
                 Span sp = make_span(file, sym.line, sym.col, sym.name.len());
                 if sym.kind == SymbolKind.Function {

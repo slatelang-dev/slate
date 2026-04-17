@@ -18,6 +18,7 @@ struct Symbol {
     SymbolKind kind;
     bool initialized;
     bool used;
+    int scope_depth;
     int line;
     int col;
 }
@@ -29,6 +30,7 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
         kind: kind,
         initialized: true,
         used: false,
+        scope_depth: 0,
         line: line,
         col: col
     );
@@ -86,7 +88,7 @@ Scope pop_scope(Scope scope) {
     mutable int i = 0;
     while i < scope.symbols.len() {
         Symbol sym = scope.symbols.get(i);
-        if sym.line <= scope.depth {
+        if sym.scope_depth <= scope.depth {
             remaining = remaining.add(sym);
         }
         i += 1;
@@ -101,7 +103,8 @@ Scope declare_symbol(Scope scope, Symbol sym) {
         kind: sym.kind,
         initialized: sym.initialized,
         used: sym.used,
-        line: scope.depth,
+        scope_depth: scope.depth,
+        line: sym.line,
         col: sym.col
     );
     return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth);
@@ -135,7 +138,7 @@ bool symbol_exists_in_current_scope(Scope scope, string name) {
             running = false;
         } else {
             Symbol sym = scope.symbols.get(i);
-            if sym.line == scope.depth and sym.name == name {
+            if sym.scope_depth == scope.depth and sym.name == name {
                 found = true;
                 running = false;
             }

@@ -169,7 +169,8 @@ list(string) module_functions(string name) {
             "load_all_modules", "all_modules_ok", "first_module_error",
             "project_valid", "project_display", "make_project");
     }
-    return empty;
+    list(string) no_fns = empty;
+    return no_fns;
 }
 
 list(string) module_types(string name) {
@@ -222,7 +223,8 @@ list(string) module_types(string name) {
     if name == "compiler" or name == "loader" or name == "project" or name == "modules" {
         return ("Project", "LoadedModule");
     }
-    return empty;
+    list(string) no_types = empty;
+    return no_types;
 }
 
 # Register all functions from a module into scope
