@@ -109,19 +109,6 @@ Scope declare_symbol(Scope scope, Symbol sym) {
     );
     return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth);
 }
-    print("  sym is a Symbol: " + sym.kind);
-    Symbol tagged = Symbol(
-        name: sym.name,
-        type_name: sym.type_name,
-        kind: sym.kind,
-        initialized: sym.initialized,
-        used: sym.used,
-        scope_depth: scope.depth,
-        line: sym.line,
-        col: sym.col
-    );
-    return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth);
-}
 
 option(Symbol) lookup_symbol(Scope scope, string name) {
     mutable int i = scope.symbols.len() - 1;
