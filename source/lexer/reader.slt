@@ -42,6 +42,7 @@ TokenKind keyword_or_ident(string value) {
         "string":  return TokenKind.String;
         "bool":    return TokenKind.Bool;
         "char":    return TokenKind.Char;
+        "ptr":     return TokenKind.Ptr;
         "list":    return TokenKind.List;
         "table":   return TokenKind.Table;
         "option":  return TokenKind.Option;

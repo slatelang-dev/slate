@@ -33,6 +33,10 @@ ParseResult parse_type(list(Token) tokens, int pos) {
         return parse_ok(make_type("bool", line, col), pos + 1);
     }
 
+    if t.kind == TokenKind.Ptr {
+        return parse_ok(make_type("ptr", line, col), pos + 1);
+    }
+
     if t.kind == TokenKind.Char {
         return parse_ok(make_type("char", line, col), pos + 1);
     }

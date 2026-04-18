@@ -15,7 +15,7 @@ enum TokenKind {
     Private, Const, Mutable, Affine, Bare,
     Generic, Range,
     # Types
-    Int, Float, String, Bool, Char,
+    Int, Float, String, Bool, Char, Ptr,
     List, Table, Option, Result,
     # Literals
     IntLit, FloatLit, StringLit, CharLit, Interp,
