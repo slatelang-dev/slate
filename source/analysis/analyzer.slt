@@ -90,7 +90,7 @@ list(string) module_functions(string name) {
     # analysis
     if name == "analysis" or name == "symbols" or name == "resolver" or name == "checker"
     or name == "mutability" or name == "returns" or name == "usage" or name == "analyzer" {
-        return ("analyse", "analyse_fn", "new_scope", "push_scope", "pop_scope",
+        return ("analyse", "analyse_fn", "analyse_bare", "new_scope", "push_scope", "pop_scope",
             "declare_symbol", "lookup_symbol", "symbol_exists_in_current_scope",
             "make_symbol", "make_var", "make_mutable_var", "make_const_var",
             "make_param", "make_fn_symbol", "symbol_is_mutable", "symbol_is_immutable",
@@ -318,8 +318,14 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
 # Analyse a full program node
 
 AnalysisResult analyse(Node program, string file) {
-    AnalysisResult result = analysis_ok();
-    Scope scope = new_scope();
+    return analyse_bare(program, file, false);
+}
+
+AnalysisResult analyse_bare(Node program, string file, bool bare) {
+    mutable AnalysisResult result = analysis_ok();
+    mutable Scope scope = new_scope();
+
+    # Zero-th pass — register functions from imported modules
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
@@ -328,11 +334,23 @@ AnalysisResult analyse(Node program, string file) {
         }
         i += 1;
     }
+
+    # First pass — register all top-level function names
     i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
             Node return_type = decl.children.get(0);
+            if return_type.value == "ptr" and bare == false {
+                Span s = make_span(file, decl.line, decl.col, decl.value.len());
+                AnalysisError err = make_error(
+                    ErrorKind.InvalidUse,
+                    "ptr type requires bare mode",
+                    "Add bare = true to your slate.toml to use ptr",
+                    s
+                );
+                result = AnalysisResult(errors: result.errors.add(err), warnings: result.warnings);
+            }
             Symbol fn_sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(scope, decl.value) {
                 Span s = make_span(file, decl.line, decl.col, decl.value.len());
