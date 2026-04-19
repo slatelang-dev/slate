@@ -156,7 +156,7 @@ if name == "compiler" or name == "codegen" or name == "walker" or name == "lower
     return ("walk_program", "walk_fn", "walk_block", "walk_stmt", "walk_expr",
         "new_emitter", "emit_line", "next_reg", "advance_reg", "next_label",
         "advance_label", "set_fn", "emit_error", "emitter_has_errors",
-        "emit_file_header", "emit_fn_header", "emit_fn_footer",
+        "emit_file_header", "emit_file_header_full", "emit_fn_header", "emit_fn_footer",
         "emit_var_decl", "emit_assign", "emit_return", "emit_if",
         "emit_then_block", "emit_else_block", "emit_merge_block",
         "emit_jump", "emit_while_start", "emit_while_body", "emit_while_end",
