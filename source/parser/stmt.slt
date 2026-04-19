@@ -147,7 +147,8 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
         or t.kind == TokenKind.String or t.kind == TokenKind.Bool
         or t.kind == TokenKind.Char or t.kind == TokenKind.List
         or t.kind == TokenKind.Table or t.kind == TokenKind.Option
-        or t.kind == TokenKind.Result or t.kind == TokenKind.Void;
+        or t.kind == TokenKind.Result or t.kind == TokenKind.Void
+        or t.kind == TokenKind.Ptr;
 
     if is_type_kw { return parse_var_decl(tokens, pos); }
 
