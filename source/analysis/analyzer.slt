@@ -162,7 +162,7 @@ if name == "compiler" or name == "codegen" or name == "walker" or name == "lower
         "emit_jump", "emit_while_start", "emit_while_body", "emit_while_end",
         "emit_binary_op", "emit_unary_op", "emit_call", "emit_load",
         "emit_store", "emit_alloca", "llvm_type", "is_primitive_call",
-        "emit_primitive_call", "builtin_return_type");
+        "emit_primitive_call", "builtin_return_type", "emit_string_global", "advance_str");
 }
     if name == "loader" or name == "project" or name == "modules" {
         return ("load_project_file", "load_project", "load_entry", "load_module",
@@ -218,7 +218,7 @@ list(string) module_types(string name) {
     }
     if name == "compiler" or name == "codegen" or name == "walker" or name == "lower_expr"
     or name == "emitter" or name == "emit_stmt" {
-        return ("Emitter", "EmitResult");
+        return ("Emitter", "EmitResult", "StmtResult");
     }
     if name == "compiler" or name == "loader" or name == "project" or name == "modules" {
         return ("Project", "LoadedModule");
