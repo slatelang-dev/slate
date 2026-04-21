@@ -89,11 +89,26 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
         return parse_ok(inner.node, after_rparen);
     }
 
-    if t.kind == TokenKind.Ident {
+    if t.kind == TokenKind.Result or t.kind == TokenKind.Ok
+    or t.kind == TokenKind.Error or t.kind == TokenKind.None {
+        return parse_ok(make_ident(t.value, line, col), pos + 1);
+    }
+
+    bool is_type_or_ident = t.kind == TokenKind.Ident
+        or t.kind == TokenKind.Int or t.kind == TokenKind.Float
+        or t.kind == TokenKind.String or t.kind == TokenKind.Bool
+        or t.kind == TokenKind.Char or t.kind == TokenKind.List
+        or t.kind == TokenKind.Table or t.kind == TokenKind.Option
+        or t.kind == TokenKind.Result or t.kind == TokenKind.Void
+        or t.kind == TokenKind.Ptr;
+
+    if is_type_or_ident {
         if check(tokens, pos + 1, TokenKind.LParen) {
             return parse_call(tokens, pos);
         }
-        return parse_ok(make_ident(t.value, line, col), pos + 1);
+        if t.kind == TokenKind.Ident {
+            return parse_ok(make_ident(t.value, line, col), pos + 1);
+        }
     }
 
     return parse_err(expect_error("expression", tokens, pos), pos);
@@ -152,9 +167,6 @@ ParseResult parse_postfix(list(Token) tokens, int pos) {
             Token member_tok = tokens.get(cur + 1);
             int line = member_tok.line;
             int col = member_tok.col;
-            if member_tok.kind != TokenKind.Ident {
-                return parse_err(expect_error("field or method name after .", tokens, cur + 1), cur + 1);
-            }
             string member = member_tok.value;
             if check(tokens, cur + 1 + 1, TokenKind.LParen) {
                 ParseResult args_result = parse_args(tokens, cur + 1 + 1);

@@ -32,7 +32,11 @@ ParseResult parse_var_decl(list(Token) tokens, int pos) {
     cur = type_result.pos;
 
     Token name_tok = tokens.get(cur);
-    if name_tok.kind != TokenKind.Ident {
+    bool is_var_name = name_tok.kind == TokenKind.Ident
+        or name_tok.kind == TokenKind.Result or name_tok.kind == TokenKind.Ok
+        or name_tok.kind == TokenKind.Error or name_tok.kind == TokenKind.None
+        or name_tok.kind == TokenKind.Some;
+    if is_var_name == false {
         return parse_err(expect_error("variable name", tokens, cur), cur);
     }
     string name = name_tok.value;
@@ -154,7 +158,11 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
 
     if t.kind == TokenKind.Ident {
         Token next = tokens.get(pos + 1);
-        if next.kind == TokenKind.Ident { return parse_var_decl(tokens, pos); }
+        bool is_var_name_kw = next.kind == TokenKind.Ident
+            or next.kind == TokenKind.Result or next.kind == TokenKind.Ok
+            or next.kind == TokenKind.Error or next.kind == TokenKind.None
+            or next.kind == TokenKind.Some;
+        if is_var_name_kw { return parse_var_decl(tokens, pos); }
         if next.kind == TokenKind.Assign or next.kind == TokenKind.PlusEq
         or next.kind == TokenKind.MinusEq or next.kind == TokenKind.StarEq
         or next.kind == TokenKind.SlashEq {
