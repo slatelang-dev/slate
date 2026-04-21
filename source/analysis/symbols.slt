@@ -97,6 +97,7 @@ Scope pop_scope(Scope scope) {
 }
 
 Scope declare_symbol(Scope scope, Symbol sym) {
+    print("declare_symbol called with: " + sym.name);
     Symbol tagged = Symbol(
         name: sym.name,
         type_name: sym.type_name,
