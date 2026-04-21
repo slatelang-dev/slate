@@ -50,7 +50,7 @@ int state_col(list(int) state) {
 
 string current_char(string source, list(int) state) {
     int pos = state_pos(state);
-    if pos >= source.len() {
+    if pos >= source.chars().len() {
         return "";
     }
     return string(source.chars().get(pos));
@@ -58,7 +58,7 @@ string current_char(string source, list(int) state) {
 
 string peek_char(string source, list(int) state) {
     int pos = state_pos(state) + 1;
-    if pos >= source.len() {
+    if pos >= source.chars().len() {
         return "";
     }
     return string(source.chars().get(pos));
