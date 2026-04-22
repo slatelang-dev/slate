@@ -42,6 +42,16 @@ AnalysisResult merge_analysis(AnalysisResult a, AnalysisResult b) {
 # This is a temporary hardcoded registry until self-hosting
 
 list(string) module_functions(string name) {
+    # slate (full library entry point)
+    if name == "slate" {
+        return ("parse", "analyse", "analyse_bare", "render_all", "render_error",
+            "render_errors", "render_warning", "render_warnings", "render_summary",
+            "render_caret", "render_source", "render_location",
+            "load_project_file", "load_project", "load_entry", "load_module",
+            "load_all_modules", "all_modules_ok", "first_module_error",
+            "project_valid", "project_display", "collect_module_asts",
+            "cmd_run", "cmd_check", "cmd_build", "cmd_test", "cmd_debug");
+    }
     # lexer
     if name == "lexer" or name == "token" or name == "chars" or name == "reader"
     or name == "tokenize" or name == "core" or name == "strings" {
@@ -175,6 +185,12 @@ if name == "loader" or name == "project" or name == "modules" {
 }
 
 list(string) module_types(string name) {
+    # slate (full library entry point)
+    if name == "slate" {
+        return ("Token", "TokenKind", "Node", "NodeKind", "ParseResult",
+            "AnalysisResult", "AnalysisError", "ErrorKind", "Span",
+            "Project", "LoadedModule");
+    }
     if name == "lexer" or name == "token" {
         return ("Token", "TokenKind");
     }
