@@ -35,7 +35,7 @@ ParseResult parse_var_decl(list(Token) tokens, int pos) {
     bool is_var_name = name_tok.kind == TokenKind.Ident
         or name_tok.kind == TokenKind.Result or name_tok.kind == TokenKind.Ok
         or name_tok.kind == TokenKind.Error or name_tok.kind == TokenKind.None
-        or name_tok.kind == TokenKind.Some;
+        or name_tok.kind == TokenKind.Some or name_tok.kind == TokenKind.Range;
     if is_var_name == false {
         return parse_err(expect_error("variable name", tokens, cur), cur);
     }
