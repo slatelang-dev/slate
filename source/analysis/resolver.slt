@@ -139,7 +139,14 @@ ResolveResult resolve_stmt(Node node, string file, Scope scope) {
         ResolveResult init_r = resolve_expr(node.children.get(1), file, decl_r.scope);
         return merge_results(decl_r, init_r);
     }
-    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+    if node.kind == NodeKind.AssignOp {
+        list(string) parts = node.value.split(" ");
+        string var_name = parts.get(0);
+        ResolveResult r = resolve_ident(var_name, node.line, node.col, file, scope);
+        ResolveResult val_r = resolve_expr(node.children.get(0), file, r.scope);
+        return merge_results(r, val_r);
+    }
+    if node.kind == NodeKind.Assign {
         ResolveResult r = resolve_ident(node.value, node.line, node.col, file, scope);
         ResolveResult val_r = resolve_expr(node.children.get(0), file, r.scope);
         return merge_results(r, val_r);
