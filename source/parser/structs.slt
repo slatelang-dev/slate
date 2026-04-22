@@ -16,10 +16,7 @@ ParseResult parse_field(list(Token) tokens, int pos) {
     ParseResult type_result = parse_type(tokens, pos);
     if type_result.success == false { return type_result; }
     Token name_tok = tokens.get(type_result.pos);
-    if name_tok.kind != TokenKind.Ident and name_tok.kind != TokenKind.Result
-    and name_tok.kind != TokenKind.Bare and name_tok.kind != TokenKind.Range {
-        return parse_err(expect_error("field name", tokens, type_result.pos), type_result.pos);
-    }
+    # Accept any token as field name - keywords allowed
     int after_semi = expect_semicolon(tokens, type_result.pos + 1);
     if after_semi == -1 {
         return parse_err(expect_error("; after field", tokens, type_result.pos + 1), type_result.pos + 1);

@@ -32,13 +32,7 @@ ParseResult parse_var_decl(list(Token) tokens, int pos) {
     cur = type_result.pos;
 
     Token name_tok = tokens.get(cur);
-    bool is_var_name = name_tok.kind == TokenKind.Ident
-        or name_tok.kind == TokenKind.Result or name_tok.kind == TokenKind.Ok
-        or name_tok.kind == TokenKind.Error or name_tok.kind == TokenKind.None
-        or name_tok.kind == TokenKind.Some or name_tok.kind == TokenKind.Range;
-    if is_var_name == false {
-        return parse_err(expect_error("variable name", tokens, cur), cur);
-    }
+    # Accept any token as variable name - keywords allowed
     string name = name_tok.value;
     cur = cur + 1;
 
@@ -158,11 +152,11 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
 
     if t.kind == TokenKind.Ident or t.kind == TokenKind.Result {
         Token next = tokens.get(pos + 1);
-        bool is_var_name_kw = next.kind == TokenKind.Ident
-            or next.kind == TokenKind.Result or next.kind == TokenKind.Ok
-            or next.kind == TokenKind.Error or next.kind == TokenKind.None
-            or next.kind == TokenKind.Some or next.kind == TokenKind.Range;
-        if is_var_name_kw { return parse_var_decl(tokens, pos); }
+        # Accept any token as second token for var decl
+        if next.kind != TokenKind.Dot and next.kind != TokenKind.LParen
+        and next.kind != TokenKind.Comma and next.kind != TokenKind.RBracket {
+            return parse_var_decl(tokens, pos);
+        }
         if next.kind == TokenKind.Assign or next.kind == TokenKind.PlusEq
         or next.kind == TokenKind.MinusEq or next.kind == TokenKind.StarEq
         or next.kind == TokenKind.SlashEq or next.kind == TokenKind.Plus {

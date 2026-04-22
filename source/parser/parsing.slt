@@ -128,8 +128,13 @@ ParseResult parse_args(list(Token) tokens, int pos) {
         if check(tokens, cur, TokenKind.RParen) {
             running = false;
         } else {
-            # Named field: Ident : expr
-            if check(tokens, cur, TokenKind.Ident) and check(tokens, cur + 1, TokenKind.Colon) {
+            # Named field: Ident : expr or keyword : expr
+            bool is_keyword_name = tokens.get(cur).kind == TokenKind.Range
+                or tokens.get(cur).kind == TokenKind.Result
+                or tokens.get(cur).kind == TokenKind.Int
+                or tokens.get(cur).kind == TokenKind.String
+                or tokens.get(cur).kind == TokenKind.Bool;
+            if (check(tokens, cur, TokenKind.Ident) or is_keyword_name) and check(tokens, cur + 1, TokenKind.Colon) {
                 cur = cur + 2;  # skip name and colon
                 ParseResult val = parse_expr(tokens, cur);
                 if val.success == false { return val; }

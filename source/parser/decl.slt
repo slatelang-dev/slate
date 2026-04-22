@@ -15,11 +15,7 @@ ParseResult parse_param(list(Token) tokens, int pos) {
     ParseResult type_result = parse_type(tokens, pos);
     if type_result.success == false { return type_result; }
     Token name_tok = tokens.get(type_result.pos);
-    if name_tok.kind != TokenKind.Ident and name_tok.kind != TokenKind.Result
-    and name_tok.kind != TokenKind.Ok and name_tok.kind != TokenKind.Error
-    and name_tok.kind != TokenKind.Range {
-        return parse_err(expect_error("parameter name", tokens, type_result.pos), type_result.pos);
-    }
+    # Accept any token as param name - keywords allowed
     return parse_ok(make_param_node(name_tok.value, type_result.node, line, col), type_result.pos + 1);
 }
 
