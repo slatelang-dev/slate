@@ -386,6 +386,18 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
                 scope = declare_symbol(scope, fn_sym);
             }
         }
+        if decl.kind == NodeKind.StructDecl {
+            Symbol struct_sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(scope, decl.value) == false {
+                scope = declare_symbol(scope, struct_sym);
+            }
+        }
+        if decl.kind == NodeKind.EnumDecl {
+            Symbol enum_sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(scope, decl.value) == false {
+                scope = declare_symbol(scope, enum_sym);
+            }
+        }
         i += 1;
     }
 
