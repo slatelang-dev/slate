@@ -69,16 +69,18 @@ ParseResult parse_match(list(Token) tokens, int pos) {
             ParseResult arm_body;
             if check(tokens, cur, TokenKind.LBrace) {
                 arm_body = parse_block(tokens, cur);
+                if arm_body.success == false { return arm_body; }
+                arm_children = arm_children.add(arm_body.node);
+                cur = arm_body.pos;
             } else {
                 ParseResult stmt = parse_stmt(tokens, cur);
                 if stmt.success == false { return stmt; }
-                arm_children = arm_children.add(stmt.node);
-                cur = stmt.pos;
-                arm_body = parse_ok(make_block(arm_children, arm_line, arm_col), cur);
+                mutable list(Node) single = empty;
+                single = single.add(stmt.node);
+                arm_body = parse_ok(make_block(single, arm_line, arm_col), stmt.pos);
+                arm_children = arm_children.add(arm_body.node);
+                cur = arm_body.pos;
             }
-            if arm_body.success == false { return arm_body; }
-            arm_children = arm_children.add(arm_body.node);
-            cur = arm_body.pos;
 
             arms = arms.add(make_match_arm(pattern_kind, arm_children, arm_line, arm_col));
         }
