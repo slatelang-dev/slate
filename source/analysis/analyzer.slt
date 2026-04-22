@@ -49,7 +49,8 @@ list(string) module_functions(string name) {
             "render_caret", "render_source", "render_location",
             "load_project_file", "load_project", "load_entry", "load_module",
             "load_all_modules", "all_modules_ok", "first_module_error",
-            "project_valid", "project_display", "collect_module_asts");
+            "project_valid", "project_display", "collect_module_asts",
+            "home", "run");
     }
     # lexer
     if name == "lexer" or name == "token" or name == "chars" or name == "reader"
@@ -177,7 +178,8 @@ if name == "loader" or name == "project" or name == "modules" {
     return ("load_project_file", "load_project", "load_entry", "load_module",
         "load_all_modules", "all_modules_ok", "first_module_error",
         "project_valid", "project_display", "make_project",
-        "collect_module_asts", "module_already_loaded");
+        "collect_module_asts", "module_already_loaded",
+        "home", "run");
 }
     list(string) no_fns = empty;
     return no_fns;
