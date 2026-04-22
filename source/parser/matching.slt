@@ -66,7 +66,7 @@ ParseResult parse_match(list(Token) tokens, int pos) {
             cur = after_colon;
 
             # If next token is {, parse as block. Otherwise single statement.
-            ParseResult arm_body;
+            ParseResult arm_body = parse_ok(make_block(empty, arm_line, arm_col), cur);
             if check(tokens, cur, TokenKind.LBrace) {
                 arm_body = parse_block(tokens, cur);
                 if arm_body.success == false { return arm_body; }
