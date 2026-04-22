@@ -128,14 +128,23 @@ ParseResult parse_args(list(Token) tokens, int pos) {
         if check(tokens, cur, TokenKind.RParen) {
             running = false;
         } else {
-            # Named field: Ident : expr or keyword : expr
-            bool is_keyword_name = tokens.get(cur).kind == TokenKind.Range
-                or tokens.get(cur).kind == TokenKind.Result
-                or tokens.get(cur).kind == TokenKind.Int
-                or tokens.get(cur).kind == TokenKind.String
-                or tokens.get(cur).kind == TokenKind.Bool;
-            if (check(tokens, cur, TokenKind.Ident) or is_keyword_name) and check(tokens, cur + 1, TokenKind.Colon) {
-                cur = cur + 2;  # skip name and colon
+            # Named field: Ident or keyword followed by colon
+            Token cur_tok = tokens.get(cur);
+            bool is_named_field = check(tokens, cur + 1, TokenKind.Colon)
+                and (cur_tok.kind == TokenKind.Ident
+                    or cur_tok.kind == TokenKind.Range
+                    or cur_tok.kind == TokenKind.Result
+                    or cur_tok.kind == TokenKind.Int
+                    or cur_tok.kind == TokenKind.String
+                    or cur_tok.kind == TokenKind.Bool
+                    or cur_tok.kind == TokenKind.Some
+                    or cur_tok.kind == TokenKind.None
+                    or cur_tok.kind == TokenKind.Ok
+                    or cur_tok.kind == TokenKind.Error
+                    or cur_tok.kind == TokenKind.Private
+                    or cur_tok.kind == TokenKind.Bare);
+            if is_named_field {
+                cur = cur + 2;
                 ParseResult val = parse_expr(tokens, cur);
                 if val.success == false { return val; }
                 args = args.add(val.node);
