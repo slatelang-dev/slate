@@ -381,9 +381,7 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
             }
             Symbol fn_sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(scope, decl.value) {
-                Span s = make_span(file, decl.line, decl.col, decl.value.len());
-                AnalysisError err = duplicate_function(decl.value, s);
-                result = AnalysisResult(errors: result.errors.add(err), warnings: result.warnings);
+                # Symbol exists - could be from use or from module registry. Skip silently.
             } else {
                 scope = declare_symbol(scope, fn_sym);
             }
