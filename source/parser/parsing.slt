@@ -80,13 +80,37 @@ ParseResult parse_primary(list(Token) tokens, int pos) {
     }
 
     if t.kind == TokenKind.LParen {
-        ParseResult inner = parse_expr(tokens, pos + 1);
-        if inner.success == false { return inner; }
-        int after_rparen = expect_rparen(tokens, inner.pos);
-        if after_rparen == -1 {
-            return parse_err(expect_error(")", tokens, inner.pos), inner.pos);
+        if check(tokens, pos + 1, TokenKind.RParen) {
+            return parse_ok(make_empty(line, col), pos + 2);
         }
-        return parse_ok(inner.node, after_rparen);
+        ParseResult first = parse_expr(tokens, pos + 1);
+        if first.success == false { return first; }
+        mutable int cur = first.pos;
+        if check(tokens, cur, TokenKind.Comma) {
+            mutable list(Node) items = empty;
+            items = items.add(first.node);
+            while check(tokens, cur, TokenKind.Comma) {
+                cur = cur + 1;
+                if check(tokens, cur, TokenKind.RParen) {
+                    # trailing comma — stop
+                } else {
+                    ParseResult item = parse_expr(tokens, cur);
+                    if item.success == false { return item; }
+                    items = items.add(item.node);
+                    cur = item.pos;
+                }
+            }
+            int after_rparen = expect_rparen(tokens, cur);
+            if after_rparen == -1 {
+                return parse_err(expect_error(")", tokens, cur), cur);
+            }
+            return parse_ok(make_block(items, line, col), after_rparen);
+        }
+        int after_rparen = expect_rparen(tokens, cur);
+        if after_rparen == -1 {
+            return parse_err(expect_error(")", tokens, cur), cur);
+        }
+        return parse_ok(first.node, after_rparen);
     }
 
     if t.kind == TokenKind.Result or t.kind == TokenKind.Ok
