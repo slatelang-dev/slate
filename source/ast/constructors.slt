@@ -135,7 +135,7 @@ Node make_match_arm(string pattern_kind, list(Node) arm_children, int line, int 
 
 # Param — value is param name, child 0 is type node
 
-Node make_param(string name, Node type_node, int line, int col) {
+Node make_param_node(string name, Node type_node, int line, int col) {
     return Node(kind: NodeKind.Param, value: name, line: line, col: col, children: (type_node,));
 }
 

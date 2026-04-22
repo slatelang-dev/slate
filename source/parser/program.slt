@@ -29,9 +29,6 @@ ParseResult parse_program(list(Token) tokens) {
             # use statement
             if t.kind == TokenKind.Use {
                 Token mod_tok = tokens.get(cur + 1);
-                if mod_tok.kind != TokenKind.Ident {
-                    return parse_err(expect_error("module name after use", tokens, cur + 1), cur + 1);
-                }
                 int after_semi = expect_semicolon(tokens, cur + 1 + 1);
                 if after_semi == -1 {
                     return parse_err(expect_error("; after use", tokens, cur + 1 + 1), cur + 1 + 1);
@@ -43,9 +40,6 @@ ParseResult parse_program(list(Token) tokens) {
             # module declaration
             else if t.kind == TokenKind.Module {
                 Token mod_tok = tokens.get(cur + 1);
-                if mod_tok.kind != TokenKind.Ident {
-                    return parse_err(expect_error("module name after module", tokens, cur + 1), cur + 1);
-                }
                 int after_semi = expect_semicolon(tokens, cur + 1 + 1);
                 if after_semi == -1 {
                     return parse_err(expect_error("; after module", tokens, cur + 1 + 1), cur + 1 + 1);
