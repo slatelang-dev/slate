@@ -156,7 +156,7 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
 
     if is_type_kw { return parse_var_decl(tokens, pos); }
 
-    if t.kind == TokenKind.Ident {
+    if t.kind == TokenKind.Ident or t.kind == TokenKind.Result {
         Token next = tokens.get(pos + 1);
         bool is_var_name_kw = next.kind == TokenKind.Ident
             or next.kind == TokenKind.Result or next.kind == TokenKind.Ok
