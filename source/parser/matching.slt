@@ -73,11 +73,38 @@ ParseResult parse_match(list(Token) tokens, int pos) {
                 arm_children = arm_children.add(arm_body.node);
                 cur = arm_body.pos;
             } else {
-                ParseResult stmt = parse_stmt(tokens, cur);
-                if stmt.success == false { return stmt; }
-                mutable list(Node) single = empty;
-                single = single.add(stmt.node);
-                arm_body = parse_ok(make_block(single, arm_line, arm_col), stmt.pos);
+                # Parse multiple statements until next arm or closing brace
+                mutable list(Node) stmts = empty;
+                mutable bool arm_running = true;
+                while arm_running {
+                    if check(tokens, cur, TokenKind.RBrace) {
+                        arm_running = false;
+                    } else if at_end(tokens, cur) {
+                        arm_running = false;
+                    } else {
+                        Token peek = tokens.get(cur);
+                        bool is_new_arm = false;
+                        if peek.kind == TokenKind.StringLit {
+                            if check(tokens, cur + 1, TokenKind.Colon) {
+                                is_new_arm = true;
+                            }
+                        }
+                        if peek.kind == TokenKind.Else {
+                            if check(tokens, cur + 1, TokenKind.Colon) {
+                                is_new_arm = true;
+                            }
+                        }
+                        if is_new_arm {
+                            arm_running = false;
+                        } else {
+                            ParseResult arm_stmt = parse_stmt(tokens, cur);
+                            if arm_stmt.success == false { return arm_stmt; }
+                            stmts = stmts.add(arm_stmt.node);
+                            cur = arm_stmt.pos;
+                        }
+                    }
+                }
+                arm_body = parse_ok(make_block(stmts, arm_line, arm_col), cur);
                 arm_children = arm_children.add(arm_body.node);
                 cur = arm_body.pos;
             }
