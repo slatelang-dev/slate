@@ -343,11 +343,21 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
     mutable AnalysisResult result = analysis_ok();
     mutable Scope scope = new_scope();
 
-    # Zero-th pass — register functions from imported modules
+    # Get current module name (if declared)
+    mutable string current_mod = "";
+    mutable int j = 0;
+    while j < program.children.len() {
+        if program.children.get(j).kind == NodeKind.Module {
+            current_mod = program.children.get(j).value;
+        }
+        j += 1;
+    }
+
+    # Zero-th pass — register functions from imported modules (skip current module)
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
-        if decl.kind == NodeKind.Use {
+        if decl.kind == NodeKind.Use and decl.value != current_mod {
             scope = register_module(decl.value, scope);
         }
         i += 1;

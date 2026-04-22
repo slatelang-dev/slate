@@ -150,17 +150,21 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
 
     if is_type_kw { return parse_var_decl(tokens, pos); }
 
-    if t.kind == TokenKind.Ident or t.kind == TokenKind.Result {
+    if t.kind == TokenKind.Ident or t.kind == TokenKind.Result
+    or t.kind == TokenKind.Ok or t.kind == TokenKind.Error {
         Token next = tokens.get(pos + 1);
-        # Accept any token as second token for var decl
-        if next.kind != TokenKind.Dot and next.kind != TokenKind.LParen
-        and next.kind != TokenKind.Comma and next.kind != TokenKind.RBracket {
-            return parse_var_decl(tokens, pos);
-        }
+        # Check assignment FIRST
         if next.kind == TokenKind.Assign or next.kind == TokenKind.PlusEq
         or next.kind == TokenKind.MinusEq or next.kind == TokenKind.StarEq
-        or next.kind == TokenKind.SlashEq or next.kind == TokenKind.Plus {
+        or next.kind == TokenKind.SlashEq {
             return parse_assign(tokens, pos);
+        }
+        # Then check if it looks like a var decl (Ident followed by another Ident or keyword)
+        if next.kind == TokenKind.Ident or next.kind == TokenKind.Result
+        or next.kind == TokenKind.Ok or next.kind == TokenKind.Error
+        or next.kind == TokenKind.Some or next.kind == TokenKind.None
+        or next.kind == TokenKind.Mutable or next.kind == TokenKind.Const {
+            return parse_var_decl(tokens, pos);
         }
     }
 
