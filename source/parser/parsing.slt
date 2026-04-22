@@ -128,10 +128,19 @@ ParseResult parse_args(list(Token) tokens, int pos) {
         if check(tokens, cur, TokenKind.RParen) {
             running = false;
         } else {
-            ParseResult arg = parse_expr(tokens, cur);
-            if arg.success == false { return arg; }
-            args = args.add(arg.node);
-            cur = arg.pos;
+            # Named field: Ident : expr
+            if check(tokens, cur, TokenKind.Ident) and check(tokens, cur + 1, TokenKind.Colon) {
+                cur = cur + 2;  # skip name and colon
+                ParseResult val = parse_expr(tokens, cur);
+                if val.success == false { return val; }
+                args = args.add(val.node);
+                cur = val.pos;
+            } else {
+                ParseResult arg = parse_expr(tokens, cur);
+                if arg.success == false { return arg; }
+                args = args.add(arg.node);
+                cur = arg.pos;
+            }
             if check(tokens, cur, TokenKind.Comma) {
                 cur = cur + 1;
             } else {
