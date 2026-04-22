@@ -118,7 +118,9 @@ ParseResult parse_return(list(Token) tokens, int pos) {
     if after_semi == -1 {
         return parse_err(expect_error("; after return", tokens, val.pos), val.pos);
     }
-    return parse_ok(make_return(val.node, line, col), after_semi);
+    mutable list(Node) ret_list = empty;
+    ret_list = ret_list.add(val.node);
+    return parse_ok(make_return(ret_list, line, col), after_semi);
 }
 
 # Parse break statement
