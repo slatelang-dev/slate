@@ -165,7 +165,7 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
         if is_var_name_kw { return parse_var_decl(tokens, pos); }
         if next.kind == TokenKind.Assign or next.kind == TokenKind.PlusEq
         or next.kind == TokenKind.MinusEq or next.kind == TokenKind.StarEq
-        or next.kind == TokenKind.SlashEq {
+        or next.kind == TokenKind.SlashEq or next.kind == TokenKind.Plus {
             return parse_assign(tokens, pos);
         }
     }
