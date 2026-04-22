@@ -121,10 +121,21 @@ ParseResult parse_return(list(Token) tokens, int pos) {
     return parse_ok(make_return((val.node,), line, col), after_semi);
 }
 
+# Parse break statement
+
+ParseResult parse_break(list(Token) tokens, int pos) {
+    int after_semi = expect_semicolon(tokens, pos + 1);
+    if after_semi == -1 {
+        return parse_err(expect_error("; after break", tokens, pos + 1), pos + 1);
+    }
+    return parse_ok(make_break(tokens.get(pos).line, tokens.get(pos).col), after_semi);
+}
+
 ParseResult parse_stmt(list(Token) tokens, int pos) {
     Token t = tokens.get(pos);
 
     if t.kind == TokenKind.Return  { return parse_return(tokens, pos); }
+    if t.kind == TokenKind.Break  { return parse_break(tokens, pos); }
     if t.kind == TokenKind.If      { return parse_if(tokens, pos); }
     if t.kind == TokenKind.While   { return parse_while(tokens, pos); }
     if t.kind == TokenKind.For     { return parse_for(tokens, pos); }
@@ -132,14 +143,6 @@ ParseResult parse_stmt(list(Token) tokens, int pos) {
     if t.kind == TokenKind.Mutable { return parse_var_decl(tokens, pos); }
     if t.kind == TokenKind.Const   { return parse_var_decl(tokens, pos); }
     if t.kind == TokenKind.Affine  { return parse_var_decl(tokens, pos); }
-
-    if t.kind == TokenKind.Break {
-        int after_semi = expect_semicolon(tokens, pos + 1);
-        if after_semi == -1 {
-            return parse_err(expect_error("; after break", tokens, pos + 1), pos + 1);
-        }
-        return parse_ok(make_break(t.line, t.col), after_semi);
-    }
 
     bool is_type_kw = t.kind == TokenKind.Int or t.kind == TokenKind.Float
         or t.kind == TokenKind.String or t.kind == TokenKind.Bool
