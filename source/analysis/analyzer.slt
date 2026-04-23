@@ -75,7 +75,7 @@ list(string) module_functions(string name) {
             "make_var_decl", "make_mutable_decl", "make_const_decl", "make_affine_decl",
             "make_assign", "make_assign_op", "make_return", "make_break",
             "make_if", "make_while", "make_for", "make_for_in", "make_block",
-            "make_match", "make_match_arm", "make_param", "make_field", "make_variant",
+            "make_match", "make_match_arm", "make_param_node", "make_field", "make_variant",
             "make_fn_decl", "make_struct_decl", "make_enum_decl", "make_use",
             "make_module", "make_program");
     }
