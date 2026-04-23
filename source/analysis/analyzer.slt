@@ -178,7 +178,7 @@ AnalysisResult analyse(Node program, string file) {
     return analyse_bare(program, file, false);
 }
 
-AnalysisResult analyse_bare(Node program, string file, bool bare) {
+AnalysisResult analyse_bare(Node program, string file, bool is_bare) {
     mutable AnalysisResult result_out = analysis_ok();
     mutable Scope scope = new_scope();
 
@@ -208,7 +208,7 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
             Node return_type = decl.children.get(0);
-            if return_type.value == "ptr" and bare == false {
+            if return_type.value == "ptr" and is_bare == false {
                 Span s = make_span(file, decl.line, decl.col, decl.value.len());
                 AnalysisError err = make_error(
                     ErrorKind.InvalidUse,
