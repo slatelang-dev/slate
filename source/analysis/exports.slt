@@ -1,8 +1,6 @@
 module analysis;
 
-use ast;
 use symbols;
-use diagnostics;
 use resolver;
 use checker;
 use mutability;
