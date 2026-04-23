@@ -26,15 +26,15 @@ string render_caret(int col, int length) {
 # Render a source excerpt — file, line number, source line, caret
 
 string render_source(Span s, string source) {
-    mutable string result = "";
+    mutable string result_str = "";
     list(string) lines = source.split("\n");
     if s.line > 0 and s.line <= lines.len() {
         string src_line = lines.get(s.line - 1);
         string line_num = string(s.line);
-        result = result + gray(" " + line_num + " │ ") + src_line + "\n";
-        result = result + gray("   │ ") + render_caret(s.col, s.length);
+        result_str = result_str + gray(" " + line_num + " │ ") + src_line + "\n";
+        result_str = result_str + gray("   │ ") + render_caret(s.col, s.length);
     }
-    return result;
+    return result_str;
 }
 
 # Render the location header — file:line:col
