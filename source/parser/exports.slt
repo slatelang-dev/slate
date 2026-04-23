@@ -4,6 +4,7 @@ use token;
 use node;
 use state;
 use types;
+use precedence;
 use parsing;
 use stmt;
 use control;
