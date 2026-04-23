@@ -75,31 +75,50 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
     seen = seen.add(mod_name);
 
     list(string) file_parts = file.split("/");
-    mutable string base = "";
-    mutable int i = 0;
-    while i < file_parts.len() - 1 {
-        if base == "" {
-            base = file_parts.get(i);
-        } else {
-            base = base + "/" + file_parts.get(i);
+    
+    mutable bool found = false;
+    mutable string mod_path = "";
+    mutable int depth = file_parts.len() - 1;
+    
+    while depth > 0 and found == false {
+        mutable string base = "";
+        mutable int j = 0;
+        while j < depth {
+            if base == "" {
+                base = file_parts.get(j);
+            } else {
+                base = base + "/" + file_parts.get(j);
+            }
+            j += 1;
         }
-        i += 1;
-    }
-    if base != "" {
         base = base + "/";
+        
+        string try_exports = base + mod_name + "/exports.slt";
+        string try_single = base + mod_name + ".slt";
+        
+        if file(try_exports).exists() {
+            mod_path = try_exports;
+            found = true;
+        } else if file(try_single).exists() {
+            mod_path = try_single;
+            found = true;
+        }
+        
+        depth = depth - 1;
     }
-    mutable string mod_path = base + mod_name + "/exports.slt";
-    if file(mod_path).exists() == false {
-        mod_path = base + mod_name + ".slt";
-    }
-    if file(mod_path).exists() == false {
+    
+    if found == false {
         string dep_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
         if file(dep_path).exists() {
             mod_path = dep_path;
-        } else {
-            return scope;
+            found = true;
         }
     }
+    
+    if found == false {
+        return scope;
+    }
+    
     string source = file(mod_path).read();
     ParseResult parsed = parse(source);
     if parsed.success == false {
