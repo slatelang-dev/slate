@@ -160,7 +160,8 @@ Scope register_ast_symbols_with_visited(Node program, Scope scope, string mod_ba
         }
         if decl.kind == NodeKind.Use {
             print("[load]   following use: " + decl.value);
-            s = load_module_with_visited(decl.value, s, file, seen);
+            Scope loaded = load_module_with_visited(decl.value, s, file, seen);
+            s = loaded;
             seen = seen.add(decl.value);
         }
         i += 1;
