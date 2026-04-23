@@ -59,7 +59,7 @@ list(string) module_functions(string name) {
             "new_state", "state_pos", "state_line", "state_col", "current_char",
             "peek_char", "advance", "skip_whitespace", "skip_comment",
             "read_ident", "read_number", "read_char_lit", "read_symbol",
-            "keyword_or_ident", "token_count", "token_at", "token_kind",
+            "read_string", "keyword_or_ident", "token_count", "token_at", "token_kind",
             "token_value", "token_line", "token_col", "token_is",
             "advance_past_ident", "advance_past_number", "advance_past_char_lit",
             "advance_past_symbol", "string_end_state");
@@ -118,7 +118,7 @@ list(string) module_functions(string name) {
     if name == "diagnostics" or name == "span" or name == "error" or name == "warning"
     or name == "renderer" {
         return ("make_span", "make_span_point", "empty_span", "span_of",
-            "span_location", "span_short", "render_all", "render_error",
+            "span_location", "span_short", "make_error", "render_all", "render_error",
             "render_warning", "render_errors", "render_warnings", "render_summary",
             "render_caret", "render_source", "render_location",
             "undefined_variable", "undefined_function", "duplicate_variable",
@@ -172,7 +172,10 @@ if name == "compiler" or name == "codegen" or name == "walker" or name == "lower
         "emit_jump", "emit_while_start", "emit_while_body", "emit_while_end",
         "emit_binary_op", "emit_unary_op", "emit_call", "emit_load",
         "emit_store", "emit_alloca", "llvm_type", "is_primitive_call",
-        "emit_primitive_call", "builtin_return_type", "emit_string_global", "advance_str");
+        "emit_primitive_call", "builtin_return_type", "emit_string_global", "advance_str",
+        "emit_int_lit", "emit_float_lit", "emit_bool_lit", "emit_char_lit",
+        "llvm_return_type", "llvm_param_type", "is_heap_type", "is_primitive", "needs_gc", "llvm_zero",
+        "remap_call_name", "remap_method_name");
 }
 if name == "loader" or name == "project" or name == "modules" {
     return ("load_project_file", "load_project", "load_entry", "load_module",

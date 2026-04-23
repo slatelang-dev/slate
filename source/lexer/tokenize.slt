@@ -43,9 +43,9 @@ list(Token) tokenize(string source) {
             tokens = tokens.add(t);
             s = advance_past_ident(source, s);
         } else {
-            Token t = read_symbol(source, s);
-            tokens = tokens.add(t);
-            s = advance_past_symbol(source, s, t.value);
+            Token tok = read_symbol(source, s);
+            tokens = tokens.add(tok);
+            s = advance_past_symbol(source, s, tok.value);
         }
     }
 

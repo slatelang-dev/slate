@@ -128,13 +128,13 @@ ReturnResult check_fn_returns(Node fn_node, string file) {
         return ReturnResult(errors: r.errors, always_returns: true);
     }
 
-    ReturnResult r = check_block_returns(body, fn_name, return_type, file);
+    ReturnResult ret_b = check_block_returns(body, fn_name, return_type, file);
 
-    if r.always_returns == false {
+    if ret_b.always_returns == false {
         Span s = make_span(file, fn_node.line, fn_node.col, fn_name.len());
         AnalysisError err = missing_return(fn_name, return_type, s);
-        return merge_return(r, return_err(err));
+        return merge_return(ret_b, return_err(err));
     }
 
-    return r;
+    return ret_b;
 }
