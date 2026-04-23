@@ -276,7 +276,7 @@ Scope register_module(string name, Scope scope) {
 # Analyse a single function declaration
 
 AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
-    mutable AnalysisResult result = analysis_ok();
+    mutable AnalysisResult result_out = analysis_ok();
     string fn_name = fn_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
 
@@ -290,7 +290,7 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
         ResolveResult decl = declare_var(param.value, param_type, NodeKind.Param, param.line, param.col, file, cur_scope);
         mutable int j = 0;
         while j < decl.errors.len() {
-            result = AnalysisResult(errors: result.errors.add(decl.errors.get(j)), warnings: result.warnings);
+            result_out = AnalysisResult(errors: result_out.errors.add(decl.errors.get(j)), warnings: result_out.warnings);
             j += 1;
         }
         cur_scope = decl.scope;
@@ -300,28 +300,28 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
     ResolveResult resolve = resolve_block(body, file, cur_scope);
     i = 0;
     while i < resolve.errors.len() {
-        result = AnalysisResult(errors: result.errors.add(resolve.errors.get(i)), warnings: result.warnings);
+        result_out = AnalysisResult(errors: result_out.errors.add(resolve.errors.get(i)), warnings: result_out.warnings);
         i += 1;
     }
 
     CheckResult check = check_stmt(body, resolve.scope, file);
     i = 0;
     while i < check.errors.len() {
-        result = AnalysisResult(errors: result.errors.add(check.errors.get(i)), warnings: result.warnings);
+        result_out = AnalysisResult(errors: result_out.errors.add(check.errors.get(i)), warnings: result_out.warnings);
         i += 1;
     }
 
     MutResult mut_result = check_mut_block(body, file, resolve.scope);
     i = 0;
     while i < mut_result.errors.len() {
-        result = AnalysisResult(errors: result.errors.add(mut_result.errors.get(i)), warnings: result.warnings);
+        result_out = AnalysisResult(errors: result_out.errors.add(mut_result.errors.get(i)), warnings: result_out.warnings);
         i += 1;
     }
 
     ReturnResult ret = check_fn_returns(fn_node, file);
     i = 0;
     while i < ret.errors.len() {
-        result = AnalysisResult(errors: result.errors.add(ret.errors.get(i)), warnings: result.warnings);
+        result_out = AnalysisResult(errors: result_out.errors.add(ret.errors.get(i)), warnings: result_out.warnings);
         i += 1;
     }
 
@@ -329,11 +329,11 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
     UsageResult used = warn_unused(tracked, file);
     i = 0;
     while i < used.warnings.len() {
-        result = AnalysisResult(errors: result.errors, warnings: result.warnings.add(used.warnings.get(i)));
+        result_out = AnalysisResult(errors: result_out.errors, warnings: result_out.warnings.add(used.warnings.get(i)));
         i += 1;
     }
 
-    return result;
+    return result_out;
 }
 
 # Analyse a full program node
@@ -343,7 +343,7 @@ AnalysisResult analyse(Node program, string file) {
 }
 
 AnalysisResult analyse_bare(Node program, string file, bool bare) {
-    mutable AnalysisResult result = analysis_ok();
+    mutable AnalysisResult result_out = analysis_ok();
     mutable Scope scope = new_scope();
 
     # Get current module name (if declared)
@@ -380,7 +380,7 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
                     "Add bare = true to your slate.toml to use ptr",
                     s
                 );
-                result = AnalysisResult(errors: result.errors.add(err), warnings: result.warnings);
+                result_out = AnalysisResult(errors: result_out.errors.add(err), warnings: result_out.warnings);
             }
             Symbol fn_sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(scope, decl.value) {
@@ -410,10 +410,10 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
             AnalysisResult fn_result = analyse_fn(decl, file, scope);
-            result = merge_analysis(result, fn_result);
+            result_out = merge_analysis(result_out, fn_result);
         }
         i += 1;
     }
 
-    return result;
+    return result_out;
 }
