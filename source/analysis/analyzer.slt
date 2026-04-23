@@ -65,14 +65,15 @@ Scope load_module_symbols(string mod_name, Scope scope, string file) {
 }
 
 Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited) {
+    mutable list(string) seen = visited;
     mutable int vi = 0;
     mutable bool already_seen = false;
-    while vi < visited.len() {
-        if visited.get(vi) == mod_name { already_seen = true; }
+    while vi < seen.len() {
+        if seen.get(vi) == mod_name { already_seen = true; }
         vi += 1;
     }
     if already_seen { return scope; }
-    visited = visited.add(mod_name);
+    seen = seen.add(mod_name);
 
     list(string) file_parts = file.split("/");
     mutable string base = "";
@@ -105,7 +106,7 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
     if parsed.success == false {
         return scope;
     }
-    return register_ast_symbols_inner(parsed.node, scope, mod_path, visited);
+    return register_ast_symbols_inner(parsed.node, scope, mod_path, seen);
 }
 
 # Register all top-level declarations from a parsed AST
