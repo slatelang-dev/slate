@@ -160,19 +160,8 @@ Scope register_ast_symbols_with_visited(Node program, Scope scope, string mod_ba
         }
         if decl.kind == NodeKind.Use {
             print("[load]   following use: " + decl.value);
-            string child_mod = decl.value;
-            string child_path = mod_base + "/" + child_mod + "/exports.slt";
-            if file(child_path).exists() == false {
-                child_path = mod_base + "/" + child_mod + ".slt";
-            }
-            if file(child_path).exists() {
-                string child_source = file(child_path).read();
-                ParseResult child_parsed = parse(child_source);
-                if child_parsed.success {
-                    s = register_ast_symbols_with_visited(child_parsed.node, s, mod_base, seen);
-                    seen = seen.add(child_mod);
-                }
-            }
+            s = load_module_with_visited(decl.value, s, file, seen);
+            seen = seen.add(decl.value);
         }
         i += 1;
     }
