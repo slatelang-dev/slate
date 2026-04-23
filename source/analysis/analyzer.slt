@@ -59,7 +59,6 @@ Scope seed_builtins(Scope scope) {
 # Load and parse a module's exports, returning registered symbols
 
 Scope load_module_symbols(string mod_name, Scope scope, string file) {
-    print("[load] loading module: " + mod_name);
     list(string) visited = empty;
     return load_module_symbols_inner(mod_name, scope, file, visited);
 }
@@ -160,7 +159,6 @@ Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(st
             }
         }
         if decl.kind == NodeKind.Use {
-            print("[load]   following use: " + decl.value);
             s = load_module_symbols_inner(decl.value, s, file, visited);
         }
         i += 1;
