@@ -1,8 +1,8 @@
 module checker;
 
-use node;
+use ast;
 use symbols;
-use error;
+use diagnostics;
 use span;
 
 # Type checking result

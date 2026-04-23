@@ -1,8 +1,8 @@
 module usage;
 
-use node;
+use ast;
 use symbols;
-use warning;
+use diagnostics;
 use span;
 
 # Usage check result

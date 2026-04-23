@@ -1,8 +1,8 @@
 module mutability;
 
-use node;
+use ast;
 use symbols;
-use error;
+use diagnostics;
 use span;
 
 # Mutability check result

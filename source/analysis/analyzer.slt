@@ -1,9 +1,8 @@
 module analyzer;
 
-use node;
+use ast;
 use symbols;
-use error;
-use warning;
+use diagnostics;
 use span;
 use resolver;
 use checker;

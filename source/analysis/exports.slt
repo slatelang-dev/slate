@@ -1,10 +1,8 @@
 module analysis;
 
-use node;
+use ast;
 use symbols;
-use error;
-use warning;
-use span;
+use diagnostics;
 use resolver;
 use checker;
 use mutability;

@@ -1,7 +1,7 @@
 module returns;
 
-use node;
-use error;
+use ast;
+use diagnostics;
 use span;
 
 # Return check result

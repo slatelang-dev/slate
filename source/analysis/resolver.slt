@@ -1,9 +1,8 @@
 module resolver;
 
-use node;
+use ast;
 use symbols;
-use error;
-use warning;
+use diagnostics;
 use span;
 
 # Resolution result — carries errors, warnings, and updated scope
