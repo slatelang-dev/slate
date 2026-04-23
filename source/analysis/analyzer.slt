@@ -38,235 +38,71 @@ AnalysisResult merge_analysis(AnalysisResult a, AnalysisResult b) {
     return AnalysisResult(errors: errors, warnings: warnings);
 }
 
-# Module function registry — maps module names to known exported functions
-# This is a temporary hardcoded registry until self-hosting
+# Load and parse a module's exports, returning registered symbols
 
-list(string) module_functions(string name) {
-    # slate (full library entry point)
-    if name == "slate" {
-        return ("parse", "analyse", "analyse_bare", "render_all", "render_error",
-            "render_errors", "render_warning", "render_warnings", "render_summary",
-            "render_caret", "render_source", "render_location",
-            "load_project_file", "load_project", "load_entry", "load_module",
-            "load_all_modules", "all_modules_ok", "first_module_error",
-            "project_valid", "project_display", "collect_module_asts",
-            "make_program", "home", "run");
-    }
-    # lexer
-    if name == "lexer" or name == "token" or name == "chars" or name == "reader"
-    or name == "tokenize" or name == "core" or name == "strings" {
-        return ("tokenize", "is_digit", "is_alpha", "is_alnum", "is_whitespace",
-            "new_state", "state_pos", "state_line", "state_col", "current_char",
-            "peek_char", "advance", "skip_whitespace", "skip_comment",
-            "read_ident", "read_number", "read_char_lit", "read_symbol",
-            "read_string", "keyword_or_ident", "token_count", "token_at", "token_kind",
-            "token_value", "token_line", "token_col", "token_is",
-            "advance_past_ident", "advance_past_number", "advance_past_char_lit",
-            "advance_past_symbol", "string_end_state");
-    }
-    # ast
-    if name == "ast" or name == "node" or name == "expressions" or name == "constructors" {
-        return ("make_ident", "make_int_lit", "make_float_lit", "make_string_lit",
-            "make_char_lit", "make_bool_lit", "make_interp", "make_binary_op",
-            "make_unary_op", "make_call", "make_method_call", "make_field_access",
-            "make_some", "make_ok", "make_error_expr", "make_none", "make_empty",
-            "make_is", "make_type", "make_type_option", "make_type_result",
-            "make_type_list", "make_type_table", "make_type_void", "make_type_generic",
-            "make_var_decl", "make_mutable_decl", "make_const_decl", "make_affine_decl",
-            "make_assign", "make_assign_op", "make_return", "make_break",
-            "make_if", "make_while", "make_for", "make_for_in", "make_block",
-            "make_match", "make_match_arm", "make_param_node", "make_field", "make_variant",
-            "make_fn_decl", "make_struct_decl", "make_enum_decl", "make_use",
-            "make_module", "make_program");
-    }
-    # parser
-    if name == "parser" or name == "state" or name == "types" or name == "parsing"
-    or name == "precedence" or name == "stmt" or name == "control" or name == "matching"
-    or name == "decl" or name == "structs" or name == "program" {
-        return ("parse", "parse_program", "parse_expr", "parse_primary",
-            "parse_unary", "parse_postfix", "parse_call", "parse_args",
-            "parse_multiplication", "parse_addition", "parse_comparison",
-            "parse_equality", "parse_and", "parse_or", "parse_type",
-            "parse_stmt", "parse_block", "parse_var_decl", "parse_assign",
-            "parse_return", "parse_if", "parse_while", "parse_for",
-            "parse_match", "parse_fn_decl", "parse_params", "parse_param",
-            "parse_struct_decl", "parse_enum_decl", "parse_field", "parse_variant",
-            "parse_ok", "parse_err", "expect", "expect_semicolon", "expect_lparen",
-            "expect_rparen", "expect_lbrace", "expect_rbrace", "expect_assign",
-            "expect_colon", "expect_comma", "expect_error", "at_end", "check",
-            "advance_past", "current_kind", "current_value", "current_line",
-            "current_col");
-    }
-    # analysis
-    if name == "analysis" or name == "symbols" or name == "resolver" or name == "checker"
-    or name == "mutability" or name == "returns" or name == "usage" or name == "analyzer" {
-        return ("analyse", "analyse_fn", "analyse_bare", "new_scope", "push_scope", "pop_scope",
-            "declare_symbol", "lookup_symbol", "symbol_exists_in_current_scope",
-            "make_symbol", "make_var", "make_mutable_var", "make_const_var",
-            "make_param", "make_fn_symbol", "symbol_is_mutable", "symbol_is_immutable",
-            "resolve_expr", "resolve_stmt", "resolve_block", "resolve_ident",
-            "resolve_call", "declare_var", "is_builtin",
-            "check_expr", "check_stmt", "check_var_decl", "check_assign",
-            "check_binary_op", "infer_literal_type", "types_compatible",
-            "check_mut_expr", "check_mut_stmt", "check_mut_block",
-            "check_mutable_target", "check_initialized",
-            "check_fn_returns", "check_stmt_returns", "check_block_returns",
-            "track_expr_usage", "track_stmt_usage", "track_block_usage",
-            "mark_used", "warn_unused");
-    }
-    # diagnostics
-    if name == "diagnostics" or name == "span" or name == "error" or name == "warning"
-    or name == "renderer" {
-        return ("make_span", "make_span_point", "empty_span", "span_of",
-            "span_location", "span_short", "make_error", "render_all", "render_error",
-            "render_warning", "render_errors", "render_warnings", "render_summary",
-            "render_caret", "render_source", "render_location",
-            "undefined_variable", "undefined_function", "duplicate_variable",
-            "duplicate_function", "type_mismatch", "immutable_assignment",
-            "missing_return", "invalid_arg_count", "uninitialized_variable",
-            "unused_variable", "unused_function", "unused_import",
-            "unreachable_code", "redundant_return");
-    }
-    # ink
-    if name == "ink" or name == "colors" {
-        return ("red", "green", "blue", "yellow", "orange", "purple", "slate",
-            "gray", "white", "black", "bold", "dim", "italic", "underline",
-            "bold_red", "bold_green", "bold_yellow", "bold_blue", "bold_slate",
-            "rgb", "ansi", "hex", "ansi_reset", "ansi_fg", "ansi_bg",
-            "ansi_rgb_fg", "ansi_rgb_bg");
-    }
-    # rpc (lsp)
-    if name == "rpc" {
-        return ("rpc_read", "rpc_write", "rpc_response", "rpc_notification", "rpc_null");
-    }
-    # handlers (lsp)
-    if name == "handlers" or name == "initialize" or name == "document"
-    or name == "diagnostics" or name == "tokens" {
-        return ("handle_initialize", "handle_initialized", "handle_did_open",
-            "handle_did_change", "handle_semantic_tokens", "publish_diagnostics",
-            "lsp_diagnostic", "lsp_warning_diag", "build_diagnostics_list",
-            "lsp_range", "token_type_for", "kind_to_semantic");
-    }
-    # protocol (lsp)
-    if name == "protocol" or name == "lsp_types" {
-        return ("make_position", "make_range", "make_point_range",
-            "severity_error", "severity_warning", "severity_info", "severity_hint");
-    }
-    # commands (cli)
-    if name == "commands" or name == "run" or name == "check" or name == "build"
-    or name == "test" or name == "debug" or name == "tidy" or name == "new"
-    or name == "add" or name == "remove" or name == "sync" or name == "update"
-    or name == "docs" or name == "info" or name == "help" or name == "clean" {
-        return ("cmd_run", "cmd_check", "cmd_build", "cmd_test", "cmd_debug",
-            "cmd_tidy", "cmd_new", "cmd_add", "cmd_remove", "cmd_sync",
-            "cmd_update", "cmd_docs", "cmd_info", "cmd_help", "cmd_clean");
-    }
-if name == "compiler" or name == "codegen" or name == "walker" or name == "lower_expr"
-    or name == "emitter" or name == "emit_types" or name == "emit_expr" or name == "emit_stmt" {
-    return ("walk_program", "walk_all", "walk_fn", "walk_block", "walk_stmt", "walk_expr",
-        "new_emitter", "emit_line", "next_reg", "advance_reg", "next_label",
-        "advance_label", "set_fn", "emit_error", "emitter_has_errors",
-        "emit_file_header", "emit_file_header_full", "emit_fn_header", "emit_fn_footer",
-        "emit_var_decl", "emit_assign", "emit_return", "emit_if",
-        "emit_then_block", "emit_else_block", "emit_merge_block",
-        "emit_jump", "emit_while_start", "emit_while_body", "emit_while_end",
-        "emit_binary_op", "emit_unary_op", "emit_call", "emit_load",
-        "emit_store", "emit_alloca", "llvm_type", "is_primitive_call",
-        "emit_primitive_call", "builtin_return_type", "emit_string_global", "advance_str",
-        "emit_int_lit", "emit_float_lit", "emit_bool_lit", "emit_char_lit",
-        "llvm_return_type", "llvm_param_type", "is_heap_type", "is_primitive", "needs_gc", "llvm_zero",
-        "remap_call_name", "remap_method_name");
-}
-if name == "loader" or name == "project" or name == "modules" {
-    return ("load_project_file", "load_project", "load_entry", "load_module",
-        "load_all_modules", "all_modules_ok", "first_module_error",
-        "project_valid", "project_display", "make_project",
-        "collect_module_asts", "module_already_loaded",
-        "home", "run");
-}
-    list(string) no_fns = empty;
-    return no_fns;
-}
-
-list(string) module_types(string name) {
-    # slate (full library entry point)
-    if name == "slate" {
-        return ("Token", "TokenKind", "Node", "NodeKind", "ParseResult",
-            "AnalysisResult", "AnalysisError", "ErrorKind", "Span",
-            "Project", "LoadedModule");
-    }
-    if name == "lexer" or name == "token" {
-        return ("Token", "TokenKind");
-    }
-    if name == "ast" or name == "node" {
-        return ("Node", "NodeKind");
-    }
-    if name == "parser" or name == "state" {
-        return ("ParseResult",);
-    }
-    if name == "analysis" or name == "symbols" {
-        return ("Symbol", "SymbolKind", "Scope");
-    }
-    if name == "analysis" or name == "resolver" {
-        return ("ResolveResult",);
-    }
-    if name == "analysis" or name == "checker" {
-        return ("CheckResult",);
-    }
-    if name == "analysis" or name == "mutability" {
-        return ("MutResult",);
-    }
-    if name == "analysis" or name == "returns" {
-        return ("ReturnResult",);
-    }
-    if name == "analysis" or name == "usage" {
-        return ("UsageResult",);
-    }
-    if name == "analysis" or name == "analyzer" {
-        return ("AnalysisResult",);
-    }
-    if name == "diagnostics" or name == "error" {
-        return ("AnalysisError", "ErrorKind");
-    }
-    if name == "diagnostics" or name == "warning" {
-        return ("AnalysisWarning", "WarnKind");
-    }
-    if name == "diagnostics" or name == "span" {
-        return ("Span",);
-    }
-    if name == "protocol" or name == "lsp_types" {
-        return ("Position", "Range", "LspDiagnostic");
-    }
-    if name == "compiler" or name == "codegen" or name == "walker" or name == "lower_expr"
-    or name == "emitter" or name == "emit_stmt" {
-        return ("Emitter", "EmitResult", "StmtResult");
-    }
-    if name == "compiler" or name == "loader" or name == "project" or name == "modules" {
-        return ("Project", "LoadedModule");
-    }
-    list(string) no_types = empty;
-    return no_types;
-}
-
-# Register all functions from a module into scope
-
-Scope register_module(string name, Scope scope) {
-    list(string) fns = module_functions(name);
-    list(string) types = module_types(name);
-    mutable Scope s = scope;
+Scope load_module_symbols(string mod_name, Scope scope, string file) {
+    list(string) file_parts = file.split("/");
+    mutable string base = "";
     mutable int i = 0;
-    while i < fns.len() {
-        Symbol sym = make_fn_symbol(fns.get(i), "unknown", 0, 0);
-        if symbol_exists_in_current_scope(s, fns.get(i)) == false {
-            s = declare_symbol(s, sym);
+    while i < file_parts.len() - 1 {
+        if base == "" {
+            base = file_parts.get(i);
+        } else {
+            base = base + "/" + file_parts.get(i);
         }
         i += 1;
     }
-    i = 0;
-    while i < types.len() {
-        Symbol sym = make_fn_symbol(types.get(i), "unknown", 0, 0);
-        if symbol_exists_in_current_scope(s, types.get(i)) == false {
-            s = declare_symbol(s, sym);
+    if base != "" {
+        base = base + "/";
+    }
+    mutable string mod_path = base + mod_name + "/exports.slt";
+    if file(mod_path).exists() == false {
+        mod_path = base + mod_name + ".slt";
+    }
+    if file(mod_path).exists() == false {
+        string dep_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
+        if file(dep_path).exists() {
+            mod_path = dep_path;
+        } else {
+            return scope;
+        }
+    }
+    string source = file(mod_path).read();
+    ParseResult parsed = parse(source);
+    if parsed.success == false {
+        return scope;
+    }
+    return register_ast_symbols(parsed.node, scope, mod_path);
+}
+
+# Register all top-level declarations from a parsed AST
+
+Scope register_ast_symbols(Node program, Scope scope, string file) {
+    mutable Scope s = scope;
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            Node return_type = decl.children.get(0);
+            Symbol sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(s, decl.value) == false {
+                s = declare_symbol(s, sym);
+            }
+        }
+        if decl.kind == NodeKind.StructDecl {
+            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(s, decl.value) == false {
+                s = declare_symbol(s, sym);
+            }
+        }
+        if decl.kind == NodeKind.EnumDecl {
+            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
+            if symbol_exists_in_current_scope(s, decl.value) == false {
+                s = declare_symbol(s, sym);
+            }
+        }
+        if decl.kind == NodeKind.Use {
+            s = load_module_symbols(decl.value, s, file);
         }
         i += 1;
     }
@@ -356,12 +192,12 @@ AnalysisResult analyse_bare(Node program, string file, bool bare) {
         j += 1;
     }
 
-    # Zero-th pass — register functions from imported modules (skip current module)
+    # Zero-th pass — load imported modules and register their symbols
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use and decl.value != current_mod {
-            scope = register_module(decl.value, scope);
+            scope = load_module_symbols(decl.value, scope, file);
         }
         i += 1;
     }
