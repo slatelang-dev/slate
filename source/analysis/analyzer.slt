@@ -59,12 +59,11 @@ Scope seed_builtins(Scope scope) {
 # Load and parse a module's exports, returning registered symbols
 
 Scope load_module_symbols(string mod_name, Scope scope, string file) {
-    print("[load] loading module: " + mod_name);
-    mutable list(string) visited = empty;
-    return load_module_with_visited(mod_name, scope, file, visited);
+    list(string) visited = empty;
+    return load_module_symbols_inner(mod_name, scope, file, visited);
 }
 
-Scope load_module_with_visited(string mod_name, Scope scope, string file, list(string) visited) {
+Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited) {
     mutable list(string) seen = visited;
     mutable int vi = 0;
     mutable bool already_seen = false;
@@ -125,17 +124,18 @@ Scope load_module_with_visited(string mod_name, Scope scope, string file, list(s
     if parsed.success == false {
         return scope;
     }
-    return register_ast_symbols_with_visited(parsed.node, scope, mod_path, seen);
+    return register_ast_symbols_inner(parsed.node, scope, mod_path, seen);
 }
+
+# Register all top-level declarations from a parsed AST
 
 Scope register_ast_symbols(Node program, Scope scope, string file) {
     list(string) visited = empty;
-    return register_ast_symbols_with_visited(program, scope, file, visited);
+    return register_ast_symbols_inner(program, scope, file, visited);
 }
 
-Scope register_ast_symbols_with_visited(Node program, Scope scope, string mod_base, list(string) visited) {
+Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(string) visited) {
     mutable Scope s = scope;
-    mutable list(string) seen = visited;
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
@@ -159,18 +159,11 @@ Scope register_ast_symbols_with_visited(Node program, Scope scope, string mod_ba
             }
         }
         if decl.kind == NodeKind.Use {
-            print("[load]   following use: " + decl.value);
-            Scope loaded = load_module_with_visited(decl.value, s, file, seen);
-            s = loaded;
-            seen = seen.add(decl.value);
+            s = load_module_symbols_inner(decl.value, s, file, visited);
         }
         i += 1;
     }
     return s;
-}
-
-Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(string) visited) {
-    return register_ast_symbols_with_visited(program, scope, file, visited);
 }
 
 # Analyse a single function declaration
