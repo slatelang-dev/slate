@@ -50,7 +50,7 @@ list(string) module_functions(string name) {
             "load_project_file", "load_project", "load_entry", "load_module",
             "load_all_modules", "all_modules_ok", "first_module_error",
             "project_valid", "project_display", "collect_module_asts",
-            "home", "run");
+            "make_program", "home", "run");
     }
     # lexer
     if name == "lexer" or name == "token" or name == "chars" or name == "reader"
