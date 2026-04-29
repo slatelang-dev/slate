@@ -43,9 +43,47 @@ list(Token) read_string(string source, list(int) state) {
             s = advance(source, s);
             if esc == "n"  { current = current + "\n"; }
             else if esc == "t"  { current = current + "\t"; }
+            else if esc == "r"  { current = current + "\r"; }
             else if esc == "\\" { current = current + "\\"; }
             else if esc == "\"" { current = current + "\""; }
-            else { current = current + "\\" + esc; }
+            else if esc == "u" {
+                string hex = "";
+                int k = 0;
+                while k < 4 {
+                    string digit = current_char(source, s);
+                    if digit == "" { digit = "0"; }
+                    hex = hex + digit;
+                    s = advance(source, s);
+                    k = k + 1;
+                }
+                int code = 0;
+                int j = 0;
+                while j < hex.len() {
+                    string d = string(hex.chars().get(j));
+                    int val = 0;
+                    if d == "0" { val = 0; }
+                    else if d == "1" { val = 1; }
+                    else if d == "2" { val = 2; }
+                    else if d == "3" { val = 3; }
+                    else if d == "4" { val = 4; }
+                    else if d == "5" { val = 5; }
+                    else if d == "6" { val = 6; }
+                    else if d == "7" { val = 7; }
+                    else if d == "8" { val = 8; }
+                    else if d == "9" { val = 9; }
+                    else if d == "a" or d == "A" { val = 10; }
+                    else if d == "b" or d == "B" { val = 11; }
+                    else if d == "c" or d == "C" { val = 12; }
+                    else if d == "d" or d == "D" { val = 13; }
+                    else if d == "e" or d == "E" { val = 14; }
+                    else if d == "f" or d == "F" { val = 15; }
+                    code = code * 16 + val;
+                    j = j + 1;
+                }
+                if code < 128 {
+                    current = current + string(code.chars().get(0));
+                }
+            }
         } else {
             if current == "" {
                 seg_line = state_line(s);
