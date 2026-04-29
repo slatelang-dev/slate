@@ -47,20 +47,20 @@ list(Token) read_string(string source, list(int) state) {
             else if esc == "\\" { current = current + "\\"; }
             else if esc == "\"" { current = current + "\""; }
             else if esc == "u" {
-                string hex = "";
-                int k = 0;
+                mutable string hex = "";
+                mutable int k = 0;
                 while k < 4 {
-                    string digit = current_char(source, s);
+                    mutable string digit = current_char(source, s);
                     if digit == "" { digit = "0"; }
                     hex = hex + digit;
                     s = advance(source, s);
                     k = k + 1;
                 }
-                int code = 0;
-                int j = 0;
+                mutable int code = 0;
+                mutable int j = 0;
                 while j < hex.len() {
-                    string d = string(hex.chars().get(j));
-                    int val = 0;
+                    mutable string d = string(hex.chars().get(j));
+                    mutable int val = 0;
                     if d == "0" { val = 0; }
                     else if d == "1" { val = 1; }
                     else if d == "2" { val = 2; }
@@ -80,8 +80,9 @@ list(Token) read_string(string source, list(int) state) {
                     code = code * 16 + val;
                     j = j + 1;
                 }
-                if code < 128 {
-                    current = current + string(code.chars().get(0));
+                string ascii = "                                 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+                if code >= 32 and code < 127 {
+                    current = current + string(ascii.chars().get(code - 32));
                 }
             }
         } else {
