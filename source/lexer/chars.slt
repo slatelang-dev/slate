@@ -1,6 +1,10 @@
 module chars;
 
-# Character classification
+struct LexState {
+    int pos;
+    int line;
+    int col;
+}
 
 bool is_digit(string ch) {
     return ch == "0" or ch == "1" or ch == "2" or ch == "3" or ch == "4"
@@ -30,76 +34,76 @@ bool is_whitespace(string ch) {
     return ch == " " or ch == "\t" or ch == "\r" or ch == "\n";
 }
 
-# Lexer state: list(int) of (pos, line, col)
+# Lexer state: struct
 
-list(int) new_state() {
-    return (0, 1, 0);
+LexState new_state() {
+    return LexState(pos: 0, line: 1, col: 0);
 }
 
-int state_pos(list(int) state) {
-    return state.get(0);
+int state_pos(LexState s) {
+    return s.pos;
 }
 
-int state_line(list(int) state) {
-    return state.get(1);
+int state_line(LexState s) {
+    return s.line;
 }
 
-int state_col(list(int) state) {
-    return state.get(2);
+int state_col(LexState s) {
+    return s.col;
 }
 
-string current_char(string source, list(int) state) {
-    int pos = state_pos(state);
+string current_char(string source, LexState s) {
+    int pos = s.pos;
     if pos >= source.chars().len() {
         return "";
     }
     return string(source.chars().get(pos));
 }
 
-string peek_char(string source, list(int) state) {
-    int pos = state_pos(state) + 1;
+string peek_char(string source, LexState s) {
+    int pos = s.pos + 1;
     if pos >= source.chars().len() {
         return "";
     }
     return string(source.chars().get(pos));
 }
 
-list(int) advance(string source, list(int) state) {
-    string ch = current_char(source, state);
-    int pos  = state_pos(state) + 1;
-    mutable int line = state_line(state);
-    mutable int col  = state_col(state) + 1;
+LexState advance(string source, LexState s) {
+    string ch = current_char(source, s);
+    int pos = s.pos + 1;
+    int line = s.line;
+    int col = s.col + 1;
     if ch == "\n" {
         line = line + 1;
         col = 0;
     }
-    return (pos, line, col);
+    return LexState(pos: pos, line: line, col: col);
 }
 
-list(int) skip_whitespace(string source, list(int) state) {
-    mutable list(int) s = state;
+LexState skip_whitespace(string source, LexState s) {
+    mutable LexState cs = s;
     mutable bool running = true;
     while running {
-        string ch = current_char(source, s);
+        string ch = current_char(source, cs);
         if is_whitespace(ch) {
-            s = advance(source, s);
+            cs = advance(source, cs);
         } else {
             running = false;
         }
     }
-    return s;
+    return cs;
 }
 
-list(int) skip_comment(string source, list(int) state) {
-    mutable list(int) s = state;
+LexState skip_comment(string source, LexState s) {
+    mutable LexState cs = s;
     mutable bool running = true;
     while running {
-        string ch = current_char(source, s);
+        string ch = current_char(source, cs);
         if ch == "\n" or ch == "" {
             running = false;
         } else {
-            s = advance(source, s);
+            cs = advance(source, cs);
         }
     }
-    return s;
+    return cs;
 }
