@@ -69,8 +69,8 @@ string peek_char(list(string) chars, LexState s) {
 LexState advance(list(string) chars, LexState s) {
     string ch = current_char(chars, s);
     int pos = s.pos + 1;
-    int line = s.line;
-    int col = s.col + 1;
+    mutable int line = s.line;
+    mutable int col = s.col + 1;
     if ch == "\n" {
         line = line + 1;
         col = 0;
