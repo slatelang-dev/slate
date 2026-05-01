@@ -34,8 +34,6 @@ bool is_whitespace(string ch) {
     return ch == " " or ch == "\t" or ch == "\r" or ch == "\n";
 }
 
-# Lexer state: struct
-
 LexState new_state() {
     return LexState(pos: 0, line: 1, col: 0);
 }
