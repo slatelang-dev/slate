@@ -68,7 +68,7 @@ list(Token) read_string(list(string) chars, LexState s) {
                 }
                 mutable int code = 0;
                 mutable int j = 0;
-                list(string) hex_chars = hex.chars();
+                list(string) hex_chars = hex.split("");
                 while j < hex.len() {
                     mutable string d = hex_chars.get(j);
                     mutable int val = 0;
@@ -93,7 +93,7 @@ list(Token) read_string(list(string) chars, LexState s) {
                 }
                 if code >= 32 and code < 127 {
                     string ascii = "                                 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-                    list(string) ascii_chars = ascii.chars();
+                    list(string) ascii_chars = ascii.split("");
                     current = current + ascii_chars.get(code - 32);
                 } else if code == 27 {
                     current = current + "\\e";
