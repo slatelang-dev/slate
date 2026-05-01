@@ -9,7 +9,7 @@ use strings;
 # Main tokenize entry point
 
 list(Token) tokenize(string source) {
-    mutable list(string) chars = source.chars();
+    mutable list(string) chars = source.split("");
     mutable LexState s = new_state();
     mutable list(Token) tokens = empty;
     mutable bool running = true;
