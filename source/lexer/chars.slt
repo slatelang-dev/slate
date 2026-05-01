@@ -57,7 +57,7 @@ string current_char(list(string) chars, LexState s) {
     if pos >= chars.len() {
         return "";
     }
-    return chars.get(pos);
+    return string(chars.get(pos));
 }
 
 string peek_char(list(string) chars, LexState s) {
@@ -65,7 +65,7 @@ string peek_char(list(string) chars, LexState s) {
     if pos >= chars.len() {
         return "";
     }
-    return chars.get(pos);
+    return string(chars.get(pos));
 }
 
 LexState advance(list(string) chars, LexState s) {
