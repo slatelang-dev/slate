@@ -3,44 +3,44 @@ module strings;
 use token;
 use chars;
 
-list(Token) read_string(string source, list(int) state) {
-    mutable list(int) s = advance(source, state);
+list(Token) read_string(list(string) chars, LexState s) {
+    mutable LexState cs = advance(chars, s);
     mutable list(Token) results = empty;
     mutable string current = "";
-    mutable int seg_line = state_line(s);
-    mutable int seg_col  = state_col(s);
+    mutable int seg_line = state_line(cs);
+    mutable int seg_col  = state_col(cs);
     mutable bool running = true;
 
     while running {
-        string ch = current_char(source, s);
+        string ch = current_char(chars, cs);
         if ch == "\"" or ch == "" {
             running = false;
-        } else if ch == "&" and peek_char(source, s) == "{" {
+        } else if ch == "&" and peek_char(chars, cs) == "{" {
             if current.len() > 0 {
                 results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
                 current = "";
             }
-            s = advance(source, s);
-            s = advance(source, s);
+            cs = advance(chars, cs);
+            cs = advance(chars, cs);
             mutable string ident = "";
             mutable bool reading = true;
             while reading {
-                string ic = current_char(source, s);
+                string ic = current_char(chars, cs);
                 if ic == "}" or ic == "" {
                     reading = false;
                 } else {
                     ident = ident + ic;
-                    s = advance(source, s);
+                    cs = advance(chars, cs);
                 }
             }
-            s = advance(source, s);
-            results = results.add(Token(kind: TokenKind.Interp, value: ident, line: state_line(s), col: state_col(s)));
-            seg_line = state_line(s);
-            seg_col  = state_col(s);
+            cs = advance(chars, cs);
+            results = results.add(Token(kind: TokenKind.Interp, value: ident, line: state_line(cs), col: state_col(cs)));
+            seg_line = state_line(cs);
+            seg_col  = state_col(cs);
         } else if ch == "\\" {
-            s = advance(source, s);
-            string esc = current_char(source, s);
-            s = advance(source, s);
+            cs = advance(chars, cs);
+            string esc = current_char(chars, cs);
+            cs = advance(chars, cs);
             if esc == "n"  { current = current + "\n"; }
             else if esc == "t"  { current = current + "\t"; }
             else if esc == "r"  { current = current + "\r"; }
@@ -50,14 +50,14 @@ list(Token) read_string(string source, list(int) state) {
                 mutable string hex = "";
                 mutable int k = 0;
                 while k < 4 {
-                    mutable string digit = current_char(source, s);
+                    mutable string digit = current_char(chars, cs);
                     if digit == "" { digit = "0"; }
                     if digit == "0" or digit == "1" or digit == "2" or digit == "3" or digit == "4" 
                     or digit == "5" or digit == "6" or digit == "7" or digit == "8" or digit == "9"
                     or digit == "a" or digit == "A" or digit == "b" or digit == "B" or digit == "c" or digit == "C"
                     or digit == "d" or digit == "D" or digit == "e" or digit == "E" or digit == "f" or digit == "F" {
                         hex = hex + digit;
-                        s = advance(source, s);
+                        cs = advance(chars, cs);
                         k = k + 1;
                     } else {
                         k = 4;
@@ -99,40 +99,40 @@ list(Token) read_string(string source, list(int) state) {
             }
         } else {
             if current == "" {
-                seg_line = state_line(s);
-                seg_col  = state_col(s);
+                seg_line = state_line(cs);
+                seg_col  = state_col(cs);
             }
             current = current + ch;
-            s = advance(source, s);
+            cs = advance(chars, cs);
         }
     }
 
-    s = advance(source, s);
+    cs = advance(chars, cs);
 
     if current.len() > 0 {
         results = results.add(Token(kind: TokenKind.StringLit, value: current, line: seg_line, col: seg_col));
     }
     if results.len() == 0 {
-        results = results.add(Token(kind: TokenKind.StringLit, value: "", line: state_line(state), col: state_col(state)));
+        results = results.add(Token(kind: TokenKind.StringLit, value: "", line: state_line(s), col: state_col(s)));
     }
 
     return results;
 }
 
-list(int) string_end_state(string source, list(int) state) {
-    mutable list(int) s = advance(source, state);
+LexState string_end_state(list(string) chars, LexState s) {
+    mutable LexState cs = advance(chars, s);
     mutable bool running = true;
     while running {
-        string ch = current_char(source, s);
+        string ch = current_char(chars, cs);
         if ch == "\"" or ch == "" {
             running = false;
         } else if ch == "\\" {
-            s = advance(source, s);
-            s = advance(source, s);
+            cs = advance(chars, cs);
+            cs = advance(chars, cs);
         } else {
-            s = advance(source, s);
+            cs = advance(chars, cs);
         }
     }
-    s = advance(source, s);
-    return s;
+    cs = advance(chars, cs);
+    return cs;
 }

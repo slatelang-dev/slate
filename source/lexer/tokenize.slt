@@ -9,43 +9,44 @@ use strings;
 # Main tokenize entry point
 
 list(Token) tokenize(string source) {
+    mutable list(string) chars = source.chars();
     mutable LexState s = new_state();
     mutable list(Token) tokens = empty;
     mutable bool running = true;
 
     while running {
-        s = skip_whitespace(source, s);
-        string ch = current_char(source, s);
+        s = skip_whitespace(chars, s);
+        string ch = current_char(chars, s);
 
         if ch == "" {
             tokens = tokens.add(Token(kind: TokenKind.Eof, value: "", line: state_line(s), col: state_col(s)));
             running = false;
         } else if ch == "#" {
-            s = skip_comment(source, s);
+            s = skip_comment(chars, s);
         } else if ch == "\"" {
-            list(Token) string_tokens = read_string(source, s);
+            list(Token) string_tokens = read_string(chars, s);
             mutable int i = 0;
             while i < string_tokens.len() {
                 tokens = tokens.add(string_tokens.get(i));
                 i += 1;
             }
-            s = string_end_state(source, s);
+            s = string_end_state(chars, s);
         } else if ch == "'" {
-            Token t = read_char_lit(source, s);
+            Token t = read_char_lit(chars, s);
             tokens = tokens.add(t);
-            s = advance_past_char_lit(source, s);
+            s = advance_past_char_lit(chars, s);
         } else if is_digit(ch) {
-            Token t = read_number(source, s);
+            Token t = read_number(chars, s);
             tokens = tokens.add(t);
-            s = advance_past_number(source, s);
+            s = advance_past_number(chars, s);
         } else if is_alpha(ch) {
-            Token t = read_ident(source, s);
+            Token t = read_ident(chars, s);
             tokens = tokens.add(t);
-            s = advance_past_ident(source, s);
+            s = advance_past_ident(chars, s);
         } else {
-            Token tok = read_symbol(source, s);
+            Token tok = read_symbol(chars, s);
             tokens = tokens.add(tok);
-            s = advance_past_symbol(source, s, tok.value);
+            s = advance_past_symbol(chars, s, tok.value);
         }
     }
 

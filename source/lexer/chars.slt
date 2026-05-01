@@ -52,24 +52,24 @@ int state_col(LexState s) {
     return s.col;
 }
 
-string current_char(string source, LexState s) {
+string current_char(list(string) chars, LexState s) {
     int pos = s.pos;
-    if pos >= source.chars().len() {
+    if pos >= chars.len() {
         return "";
     }
-    return string(source.chars().get(pos));
+    return chars.get(pos);
 }
 
-string peek_char(string source, LexState s) {
+string peek_char(list(string) chars, LexState s) {
     int pos = s.pos + 1;
-    if pos >= source.chars().len() {
+    if pos >= chars.len() {
         return "";
     }
-    return string(source.chars().get(pos));
+    return chars.get(pos);
 }
 
-LexState advance(string source, LexState s) {
-    string ch = current_char(source, s);
+LexState advance(list(string) chars, LexState s) {
+    string ch = current_char(chars, s);
     int pos = s.pos + 1;
     int line = s.line;
     int col = s.col + 1;
@@ -80,13 +80,13 @@ LexState advance(string source, LexState s) {
     return LexState(pos: pos, line: line, col: col);
 }
 
-LexState skip_whitespace(string source, LexState s) {
+LexState skip_whitespace(list(string) chars, LexState s) {
     mutable LexState cs = s;
     mutable bool running = true;
     while running {
-        string ch = current_char(source, cs);
+        string ch = current_char(chars, cs);
         if is_whitespace(ch) {
-            cs = advance(source, cs);
+            cs = advance(chars, cs);
         } else {
             running = false;
         }
@@ -94,15 +94,15 @@ LexState skip_whitespace(string source, LexState s) {
     return cs;
 }
 
-LexState skip_comment(string source, LexState s) {
+LexState skip_comment(list(string) chars, LexState s) {
     mutable LexState cs = s;
     mutable bool running = true;
     while running {
-        string ch = current_char(source, cs);
+        string ch = current_char(chars, cs);
         if ch == "\n" or ch == "" {
             running = false;
         } else {
-            cs = advance(source, cs);
+            cs = advance(chars, cs);
         }
     }
     return cs;
