@@ -4,9 +4,6 @@ module symbols;
 
 enum SymbolKind {
     Variable,
-    MutableVariable,
-    ConstVariable,
-    AffineVariable,
     Function,
     Param,
     Field,
@@ -16,6 +13,9 @@ struct Symbol {
     string name;
     string type_name;
     SymbolKind kind;
+    bool mutable;
+    bool constant;
+    bool affine;
     bool initialized;
     bool used;
     int scope_depth;
@@ -28,6 +28,9 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
         name: name,
         type_name: type_name,
         kind: kind,
+        mutable: false,
+        constant: false,
+        affine: false,
         initialized: true,
         used: false,
         scope_depth: 0,
@@ -41,11 +44,15 @@ Symbol make_var(string name, string type_name, int line, int col) {
 }
 
 Symbol make_mutable_var(string name, string type_name, int line, int col) {
-    return make_symbol(name, type_name, SymbolKind.MutableVariable, line, col);
+    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
+    sym.mutable = true;
+    return sym;
 }
 
 Symbol make_const_var(string name, string type_name, int line, int col) {
-    return make_symbol(name, type_name, SymbolKind.ConstVariable, line, col);
+    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
+    sym.constant = true;
+    return sym;
 }
 
 Symbol make_param(string name, string type_name, int line, int col) {
@@ -56,14 +63,18 @@ Symbol make_fn_symbol(string name, string return_type, int line, int col) {
     return make_symbol(name, return_type, SymbolKind.Function, line, col);
 }
 
+Symbol make_affine_var(string name, string type_name, int line, int col) {
+    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
+    sym.affine = true;
+    return sym;
+}
+
 bool symbol_is_mutable(Symbol sym) {
-    return sym.kind == SymbolKind.MutableVariable;
+    return sym.mutable;
 }
 
 bool symbol_is_immutable(Symbol sym) {
-    return sym.kind == SymbolKind.Variable
-        or sym.kind == SymbolKind.Param
-        or sym.kind == SymbolKind.ConstVariable;
+    return not sym.mutable and not sym.affine;
 }
 
 # A scope is a flat list of symbols
@@ -101,6 +112,9 @@ Scope declare_symbol(Scope scope, Symbol sym) {
         name: sym.name,
         type_name: sym.type_name,
         kind: sym.kind,
+        mutable: sym.mutable,
+        constant: sym.constant,
+        affine: sym.affine,
         initialized: sym.initialized,
         used: sym.used,
         scope_depth: scope.depth,

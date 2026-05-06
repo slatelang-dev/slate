@@ -39,6 +39,7 @@ MutResult check_mutable_target(string name, int line, int col, string file, Scop
     Symbol s = sym.or(Symbol(
         name: "", type_name: "unknown",
         kind: SymbolKind.Variable,
+        mutable: false, constant: false, affine: false,
         initialized: false, used: false,
         line: 0, col: 0
     ));
@@ -59,10 +60,11 @@ MutResult check_initialized(string name, int line, int col, string file, Scope s
     Symbol s = sym.or(Symbol(
         name: "", type_name: "unknown",
         kind: SymbolKind.Variable,
+        mutable: false, constant: false, affine: false,
         initialized: false, used: false,
         line: 0, col: 0
     ));
-    if s.initialized == false and s.kind == SymbolKind.Variable {
+    if s.initialized == false and s.constant == false and s.affine == false {
         Span sp = make_span(file, line, col, name.len());
         return mut_err(uninitialized_variable(name, sp));
     }

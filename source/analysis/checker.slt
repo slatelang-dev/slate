@@ -86,7 +86,7 @@ CheckResult check_assign(Node node, Scope scope, string file) {
     if sym.exists() == false {
         return check_ok("unknown");
     }
-    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, mutable: false, constant: false, affine: false, initialized: false, used: false, line: 0, col: 0));
     if symbol_is_immutable(s) {
         Span sp = make_span(file, node.line, node.col, node.value.len());
         AnalysisError err = immutable_assignment(node.value, sp);
@@ -132,7 +132,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     if node.kind == NodeKind.Ident {
         option(Symbol) sym = lookup_symbol(scope, node.value);
         if sym.exists() {
-            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, mutable: false, constant: false, affine: false, initialized: false, used: false, line: 0, col: 0));
             return check_ok(s.type_name);
         }
         return check_ok("unknown");
@@ -153,7 +153,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     if node.kind == NodeKind.Call {
         option(Symbol) sym = lookup_symbol(scope, node.value);
         if sym.exists() {
-            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, initialized: false, used: false, line: 0, col: 0));
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, mutable: false, constant: false, affine: false, initialized: false, used: false, line: 0, col: 0));
             return check_ok(s.type_name);
         }
         return check_ok("unknown");
