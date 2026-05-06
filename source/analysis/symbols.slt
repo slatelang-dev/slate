@@ -13,9 +13,9 @@ struct Symbol {
     string name;
     string type_name;
     SymbolKind kind;
-    bool mutable;
-    bool constant;
-    bool affine;
+    bool is_mutable;
+    bool is_constant;
+    bool is_affine;
     bool initialized;
     bool used;
     int scope_depth;
@@ -28,9 +28,41 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
         name: name,
         type_name: type_name,
         kind: kind,
-        mutable: false,
-        constant: false,
-        affine: false,
+        is_mutable: false,
+        is_constant: false,
+        is_affine: false,
+        initialized: true,
+        used: false,
+        scope_depth: 0,
+        line: line,
+        col: col
+    );
+}
+
+Symbol make_mutable_var(string name, string type_name, int line, int col) {
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: SymbolKind.Variable,
+        is_mutable: true,
+        is_constant: false,
+        is_affine: false,
+        initialized: true,
+        used: false,
+        scope_depth: 0,
+        line: line,
+        col: col
+    );
+}
+
+Symbol make_const_var(string name, string type_name, int line, int col) {
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: SymbolKind.Variable,
+        is_mutable: false,
+        is_constant: true,
+        is_affine: false,
         initialized: true,
         used: false,
         scope_depth: 0,
@@ -43,18 +75,6 @@ Symbol make_var(string name, string type_name, int line, int col) {
     return make_symbol(name, type_name, SymbolKind.Variable, line, col);
 }
 
-Symbol make_mutable_var(string name, string type_name, int line, int col) {
-    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
-    sym.mutable = true;
-    return sym;
-}
-
-Symbol make_const_var(string name, string type_name, int line, int col) {
-    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
-    sym.constant = true;
-    return sym;
-}
-
 Symbol make_param(string name, string type_name, int line, int col) {
     return make_symbol(name, type_name, SymbolKind.Param, line, col);
 }
@@ -64,17 +84,27 @@ Symbol make_fn_symbol(string name, string return_type, int line, int col) {
 }
 
 Symbol make_affine_var(string name, string type_name, int line, int col) {
-    Symbol sym = make_symbol(name, type_name, SymbolKind.Variable, line, col);
-    sym.affine = true;
-    return sym;
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: SymbolKind.Variable,
+        is_mutable: false,
+        is_constant: false,
+        is_affine: true,
+        initialized: true,
+        used: false,
+        scope_depth: 0,
+        line: line,
+        col: col
+    );
 }
 
 bool symbol_is_mutable(Symbol sym) {
-    return sym.mutable;
+    return sym.is_mutable;
 }
 
 bool symbol_is_immutable(Symbol sym) {
-    return not sym.mutable and not sym.affine;
+    return not sym.is_mutable and not sym.is_affine;
 }
 
 # A scope is a flat list of symbols
@@ -112,9 +142,9 @@ Scope declare_symbol(Scope scope, Symbol sym) {
         name: sym.name,
         type_name: sym.type_name,
         kind: sym.kind,
-        mutable: sym.mutable,
-        constant: sym.constant,
-        affine: sym.affine,
+        is_mutable: sym.is_mutable,
+        is_constant: sym.is_constant,
+        is_affine: sym.is_affine,
         initialized: sym.initialized,
         used: sym.used,
         scope_depth: scope.depth,

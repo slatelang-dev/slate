@@ -52,9 +52,13 @@ MutResult check_initialized(string name, int line, int col, string file, Scope s
         return mut_ok();
     }
     Symbol s = sym.value;
-    if s.initialized == false and s.mutable == false and s.affine == false {
-        Span sp = make_span(file, line, col, name.len());
-        return mut_err(uninitialized_variable(name, sp));
+    if s.initialized == false {
+        if s.is_mutable == false {
+            if s.is_affine == false {
+                Span sp = make_span(file, line, col, name.len());
+                return mut_err(uninitialized_variable(name, sp));
+            }
+        }
     }
     return mut_ok();
 }
