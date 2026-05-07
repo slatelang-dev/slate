@@ -104,7 +104,7 @@ bool symbol_is_mutable(Symbol sym) {
 }
 
 bool symbol_is_immutable(Symbol sym) {
-    return not sym.is_mutable and not sym.is_affine;
+    return sym.is_mutable == false and sym.is_affine == false;
 }
 
 # A scope is a flat list of symbols
