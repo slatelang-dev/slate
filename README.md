@@ -1,23 +1,19 @@
-# slate
+# Slate Language Core Library
 
-The core library for the Slate programming language — lexer, parser, AST, analysis, and diagnostics.
+Lexer → Parser → AST → Semantic Analysis → Diagnostics.
 
-This repo is part of the [slatelang-dev](https://github.com/slatelang-dev) organization.
+## Modules
 
-## Status
+- **lexer/** - Tokenization with string interpolation
+- **ast/** - NodeKind enum and Node struct
+- **parser/** - Recursive descent parser with Pratt precedence
+- **analysis/** - Resolution, type checking, mutability, returns, usage
+- **diagnostics/** - Error and warning rendering
+- **ink/** - Terminal styling (ANSI colors)
 
-Active development — 0.1.0 rewrite in progress.
+## Entry Points
 
-## Repos
+- `parse(source)` → ParseResult
+- `analyse(program, file)` → AnalysisResult
 
-| Repo | Description |
-|------|-------------|
-| [slate](https://github.com/slatelang-dev/slate) | Core library (this repo) |
-| [compiler](https://github.com/slatelang-dev/compiler) | Codegen and compiler driver |
-| [cli](https://github.com/slatelang-dev/cli) | The `slate` binary |
-| [lsp](https://github.com/slatelang-dev/lsp) | Language server |
-| [runtime](https://github.com/slatelang-dev/runtime) | GC and runtime |
-
-## License
-
-MIT
+Status: 0.1.0 rewrite in progress
