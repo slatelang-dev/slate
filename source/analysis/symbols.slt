@@ -178,5 +178,8 @@ option(Symbol) lookup_symbol(Scope scope, string name) {
 }
 
 bool symbol_exists_in_current_scope(Scope scope, string name) {
-    return scope.sym_index.has(name) and scope.sym_index.get(name) == scope.depth;
+    if scope.sym_index.has(name) {
+        return scope.sym_index.get(name) == scope.depth;
+    }
+    return false;
 }
