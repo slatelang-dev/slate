@@ -114,27 +114,30 @@ bool symbol_is_immutable(Symbol sym) {
 struct Scope {
     list(Symbol) symbols;
     int depth;
+    table(string, int) sym_index;
 }
 
 Scope new_scope() {
-    return Scope(symbols: empty, depth: 0);
+    return Scope(symbols: empty, depth: 0, sym_index: empty);
 }
 
 Scope push_scope(Scope scope) {
-    return Scope(symbols: scope.symbols, depth: scope.depth + 1);
+    return Scope(symbols: scope.symbols, depth: scope.depth + 1, sym_index: scope.sym_index);
 }
 
 Scope pop_scope(Scope scope) {
     mutable list(Symbol) remaining = empty;
+    mutable table(string, int) new_index = empty;
     mutable int i = 0;
     while i < scope.symbols.len() {
         Symbol sym = scope.symbols.get(i);
         if sym.scope_depth <= scope.depth {
             remaining = remaining.add(sym);
+            new_index = new_index.set(sym.name, sym.scope_depth);
         }
         i += 1;
     }
-    return Scope(symbols: remaining, depth: scope.depth - 1);
+    return Scope(symbols: remaining, depth: scope.depth - 1, sym_index: new_index);
 }
 
 Scope declare_symbol(Scope scope, Symbol sym) {
@@ -151,7 +154,8 @@ Scope declare_symbol(Scope scope, Symbol sym) {
         line: sym.line,
         col: sym.col
     );
-    return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth);
+    table(string, int) updated_index = scope.sym_index.set(sym.name, scope.depth);
+    return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth, sym_index: updated_index);
 }
 
 option(Symbol) lookup_symbol(Scope scope, string name) {
@@ -174,20 +178,5 @@ option(Symbol) lookup_symbol(Scope scope, string name) {
 }
 
 bool symbol_exists_in_current_scope(Scope scope, string name) {
-    mutable int i = scope.symbols.len() - 1;
-    mutable bool found = false;
-    mutable bool running = true;
-    while running {
-        if i < 0 {
-            running = false;
-        } else {
-            Symbol sym = scope.symbols.get(i);
-            if sym.scope_depth == scope.depth and sym.name == name {
-                found = true;
-                running = false;
-            }
-            i = i - 1;
-        }
-    }
-    return found;
+    return scope.sym_index.has(name) and scope.sym_index.get(name) == scope.depth;
 }
