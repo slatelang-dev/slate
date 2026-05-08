@@ -92,6 +92,9 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
             j += 1;
         }
         base = base + "/";
+        if file.starts_with("/") {
+            base = "/" + base;
+        }
         
         string try_exports = base + mod_name + "/exports.slt";
         string try_single = base + mod_name + ".slt";
