@@ -239,6 +239,7 @@ AnalysisResult analyse(Node program, string file) {
 }
 
 AnalysisResult analyse_bare(Node program, string file, bool is_bare) {
+    int t_start = time();
     mutable AnalysisResult result_out = analysis_ok();
     mutable Scope scope = new_scope();
     scope = seed_builtins(scope);
@@ -262,6 +263,8 @@ AnalysisResult analyse_bare(Node program, string file, bool is_bare) {
         }
         i += 1;
     }
+    int t_modules = time();
+    print("[time] analyse_bare: module loading: " + string(t_modules - t_start) + "ms");
 
     # First pass — register all top-level function names
     i = 0;
@@ -300,17 +303,23 @@ AnalysisResult analyse_bare(Node program, string file, bool is_bare) {
         }
         i += 1;
     }
+    int t_symbols = time();
+    print("[time] analyse_bare: symbol registration: " + string(t_symbols - t_modules) + "ms");
 
     # Second pass — analyse each function body
+    int fn_count = 0;
     i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
             AnalysisResult fn_result = analyse_fn(decl, file, scope);
             result_out = merge_analysis(result_out, fn_result);
+            fn_count = fn_count + 1;
         }
         i += 1;
     }
+    int t_fns = time();
+    print("[time] analyse_bare: body analysis: " + string(t_fns - t_symbols) + "ms (" + string(fn_count) + " functions)");
 
     return result_out;
 }
