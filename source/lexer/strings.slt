@@ -96,7 +96,7 @@ list(Token) read_string(list(string) chars, LexState s) {
                     list(string) ascii_chars = ascii.chars();
                     current = current + ascii_chars.get(code - 32);
                 } else if code == 27 {
-                    current = current + "\\e";
+                    current = current + "\u001b";
                 }
             }
         } else {
