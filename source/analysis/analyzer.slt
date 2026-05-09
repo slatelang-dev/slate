@@ -60,10 +60,13 @@ Scope seed_builtins(Scope scope) {
 
 Scope load_module_symbols(string mod_name, Scope scope, string file) {
     list(string) visited = empty;
-    return load_module_symbols_inner(mod_name, scope, file, visited);
+    return load_module_symbols_inner(mod_name, scope, file, visited, 0);
 }
 
-Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited) {
+Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited, int depth) {
+    int t = time();
+    print("[diag] resolve " + mod_name + " from " + file + " depth=" + string(depth));
+
     mutable list(string) seen = visited;
     mutable int vi = 0;
     mutable bool already_seen = false;
@@ -71,19 +74,22 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
         if seen.get(vi) == mod_name { already_seen = true; }
         vi += 1;
     }
-    if already_seen { return scope; }
+    if already_seen {
+        print("[diag] cache HIT " + mod_name);
+        return scope;
+    }
     seen = seen.add(mod_name);
 
     list(string) file_parts = file.split("/");
     
     mutable bool found = false;
     mutable string mod_path = "";
-    mutable int depth = file_parts.len() - 1;
+    mutable int ascents = file_parts.len() - 1;
     
-    while depth > 0 and found == false {
+    while ascents > 0 and found == false {
         mutable string base = "";
         mutable int j = 0;
-        while j < depth {
+        while j < ascents {
             if base == "" {
                 base = file_parts.get(j);
             } else {
@@ -99,19 +105,24 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
         string try_exports = base + mod_name + "/exports.slt";
         string try_single = base + mod_name + ".slt";
         
+        print("[diag]   check " + try_exports);
         if file(try_exports).exists() {
             mod_path = try_exports;
             found = true;
-        } else if file(try_single).exists() {
-            mod_path = try_single;
-            found = true;
+        } else {
+            print("[diag]   check " + try_single);
+            if file(try_single).exists() {
+                mod_path = try_single;
+                found = true;
+            }
         }
         
-        depth = depth - 1;
+        ascents = ascents - 1;
     }
     
     if found == false {
         string dep_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
+        print("[diag]   dep " + dep_path);
         if file(dep_path).exists() {
             mod_path = dep_path;
             found = true;
@@ -119,25 +130,27 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
     }
     
     if found == false {
+        print("[diag] FAIL " + mod_name + " not found in " + string(time() - t) + "ms");
         return scope;
     }
     
+    print("[diag] FOUND " + mod_name + " -> " + mod_path + " in " + string(time() - t) + "ms");
     string source = file(mod_path).read();
     ParseResult parsed = parse(source);
     if parsed.success == false {
         return scope;
     }
-    return register_ast_symbols_inner(parsed.node, scope, mod_path, seen);
+    return register_ast_symbols_inner(parsed.node, scope, mod_path, seen, depth + 1);
 }
 
 # Register all top-level declarations from a parsed AST
 
 Scope register_ast_symbols(Node program, Scope scope, string file) {
     list(string) visited = empty;
-    return register_ast_symbols_inner(program, scope, file, visited);
+    return register_ast_symbols_inner(program, scope, file, visited, 0);
 }
 
-Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(string) visited) {
+Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(string) visited, int depth) {
     mutable Scope s = scope;
     mutable int i = 0;
     while i < program.children.len() {
@@ -162,7 +175,7 @@ Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(st
             }
         }
         if decl.kind == NodeKind.Use {
-            s = load_module_symbols_inner(decl.value, s, file, visited);
+            s = load_module_symbols_inner(decl.value, s, file, visited, depth + 1);
         }
         i += 1;
     }
