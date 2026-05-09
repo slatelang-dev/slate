@@ -44,7 +44,7 @@ Scope seed_builtins(Scope scope) {
     list(string) builtins = ("home", "parse", "file", "print", "read",
         "write", "run", "input", "string", "int", "float", "bool",
         "toml", "json", "tokenize", "alloc", "free", "memcpy",
-        "strlen", "strcmp", "puts", "read_n", "time");
+        "strlen", "strcmp", "puts", "read_n", "time", "args");
     mutable int i = 0;
     while i < builtins.len() {
         Symbol sym = make_fn_symbol(builtins.get(i), "unknown", 0, 0);
