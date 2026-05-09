@@ -56,6 +56,21 @@ Scope seed_builtins(Scope scope) {
     return s;
 }
 
+# Resolve parent directory from a file path
+
+string resolve_parent(string mod_path) {
+    list(string) parts = mod_path.split("/");
+    if parts.len() <= 1 { return ""; }
+    mutable string parent = "";
+    mutable int i = 0;
+    while i < parts.len() - 1 {
+        if i > 0 { parent = parent + "/"; }
+        parent = parent + parts.get(i);
+        i += 1;
+    }
+    return parent;
+}
+
 # Load and parse a module's exports, returning registered symbols
 
 Scope load_module_symbols(string mod_name, Scope scope, string file) {
@@ -64,9 +79,6 @@ Scope load_module_symbols(string mod_name, Scope scope, string file) {
 }
 
 Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited, int depth) {
-    int t = time();
-    print("[diag] resolve " + mod_name + " from " + file + " depth=" + string(depth));
-
     mutable list(string) seen = visited;
     mutable int vi = 0;
     mutable bool already_seen = false;
@@ -75,66 +87,49 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
         vi += 1;
     }
     if already_seen {
-        print("[diag] cache HIT " + mod_name);
         return scope;
     }
     seen = seen.add(mod_name);
 
-    list(string) file_parts = file.split("/");
+    string base_dir = resolve_parent(file);
     
     mutable bool found = false;
     mutable string mod_path = "";
-    mutable int ascents = file_parts.len() - 1;
-    
-    while ascents > 0 and found == false {
-        mutable string base = "";
-        mutable int j = 0;
-        while j < ascents {
-            if base == "" {
-                base = file_parts.get(j);
-            } else {
-                base = base + "/" + file_parts.get(j);
-            }
-            j += 1;
-        }
-        base = base + "/";
-        if file.starts_with("/") {
-            base = "/" + base;
-        }
-        
-        string try_exports = base + mod_name + "/exports.slt";
-        string try_single = base + mod_name + ".slt";
-        
-        print("[diag]   check " + try_exports);
-        if file(try_exports).exists() {
-            mod_path = try_exports;
-            found = true;
-        } else {
-            print("[diag]   check " + try_single);
-            if file(try_single).exists() {
-                mod_path = try_single;
-                found = true;
-            }
-        }
-        
-        ascents = ascents - 1;
+
+    string try_exports = base_dir + "/" + mod_name + "/exports.slt";
+    if file(try_exports).exists() {
+        mod_path = try_exports;
+        found = true;
     }
     
     if found == false {
-        string dep_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
-        print("[diag]   dep " + dep_path);
-        if file(dep_path).exists() {
-            mod_path = dep_path;
+        string try_single = base_dir + "/" + mod_name + ".slt";
+        if file(try_single).exists() {
+            mod_path = try_single;
             found = true;
         }
     }
     
     if found == false {
-        print("[diag] FAIL " + mod_name + " not found in " + string(time() - t) + "ms");
+        string deps_exports = home() + "/.slate/deps/" + mod_name + "/source/exports.slt";
+        if file(deps_exports).exists() {
+            mod_path = deps_exports;
+            found = true;
+        }
+    }
+    
+    if found == false {
+        string deps_lib = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
+        if file(deps_lib).exists() {
+            mod_path = deps_lib;
+            found = true;
+        }
+    }
+    
+    if found == false {
         return scope;
     }
     
-    print("[diag] FOUND " + mod_name + " -> " + mod_path + " in " + string(time() - t) + "ms");
     string source = file(mod_path).read();
     ParseResult parsed = parse(source);
     if parsed.success == false {
