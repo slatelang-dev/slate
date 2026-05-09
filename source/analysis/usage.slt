@@ -81,8 +81,17 @@ Scope track_expr_usage(Node node, Scope scope) {
         }
         return s;
     }
-    if node.kind == NodeKind.FieldAccess or node.kind == NodeKind.MethodCall {
+    if node.kind == NodeKind.FieldAccess {
         return track_expr_usage(node.children.get(0), scope);
+    }
+    if node.kind == NodeKind.MethodCall {
+        mutable Scope s = track_expr_usage(node.children.get(0), scope);
+        mutable int i = 1;
+        while i < node.children.len() {
+            s = track_expr_usage(node.children.get(i), s);
+            i += 1;
+        }
+        return s;
     }
     if node.kind == NodeKind.Some or node.kind == NodeKind.Ok or node.kind == NodeKind.Error {
         return track_expr_usage(node.children.get(0), scope);
