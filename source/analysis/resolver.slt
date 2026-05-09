@@ -56,7 +56,8 @@ bool is_builtin(string name) {
         or name == "run" or name == "read" or name == "read_n"
         or name == "write" or name == "string" or name == "int"
         or name == "float" or name == "bool" or name == "json"
-        or name == "toml" or name == "tokenize";
+        or name == "toml" or name == "tokenize" or name == "args"
+        or name == "home" or name == "time";
 }
 
 ResolveResult resolve_call(string name, int arg_count, int line, int col, string file, Scope scope) {
