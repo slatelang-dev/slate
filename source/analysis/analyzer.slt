@@ -58,7 +58,7 @@ Scope seed_builtins(Scope scope) {
 
 # Resolve parent directory from a file path
 
-string resolve_parent(string mod_path) {
+string resolve_parent_dir(string mod_path) {
     list(string) parts = mod_path.split("/");
     if parts.len() <= 1 { return ""; }
     mutable string parent = "";
@@ -91,7 +91,7 @@ Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(
     }
     seen = seen.add(mod_name);
 
-    string base_dir = resolve_parent(file);
+    string base_dir = resolve_parent_dir(file);
     
     mutable bool found = false;
     mutable string mod_path = "";
