@@ -125,6 +125,10 @@ Scope push_scope(Scope scope) {
     return Scope(symbols: scope.symbols, depth: scope.depth + 1, sym_index: scope.sym_index);
 }
 
+Scope create_child_scope(Scope parent) {
+    return Scope(symbols: parent.symbols, depth: parent.depth + 1, sym_index: empty);
+}
+
 Scope pop_scope(Scope scope) {
     mutable list(Symbol) remaining = empty;
     mutable table(string, int) new_index = empty;

@@ -78,7 +78,7 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     string fn_name = fn_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
 
-    Scope analyse_scope = push_scope(fn_scope);
+    Scope analyse_scope = create_child_scope(fn_scope);
 
     mutable Scope cur_scope = analyse_scope;
     mutable int fn_i = 1;
