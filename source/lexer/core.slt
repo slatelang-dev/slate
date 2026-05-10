@@ -6,89 +6,89 @@ use reader;
 
 # Token list helpers
 
-int token_count(list(Token) tokens) {
-    return tokens.len();
+int token_count(list(Token) core_tokens) {
+    return core_tokens.len();
 }
 
-Token token_at(list(Token) tokens, int i) {
-    return tokens.get(i);
+Token token_at(list(Token) core_tokens, int core_i) {
+    return core_tokens.get(core_i);
 }
 
-string token_kind(list(Token) tokens, int i) {
-    return tokens.get(i).kind;
+string token_kind(list(Token) core_tokens, int core_i) {
+    return core_tokens.get(core_i).kind;
 }
 
-string token_value(list(Token) tokens, int i) {
-    return tokens.get(i).value;
+string token_value(list(Token) core_tokens, int core_i) {
+    return core_tokens.get(core_i).value;
 }
 
-int token_line(list(Token) tokens, int i) {
-    return tokens.get(i).line;
+int token_line(list(Token) core_tokens, int core_i) {
+    return core_tokens.get(core_i).line;
 }
 
-int token_col(list(Token) tokens, int i) {
-    return tokens.get(i).col;
+int token_col(list(Token) core_tokens, int core_i) {
+    return core_tokens.get(core_i).col;
 }
 
-bool token_is(list(Token) tokens, int i, string kind) {
-    return tokens.get(i).kind == kind;
+bool token_is(list(Token) core_tokens, int core_i, string kind) {
+    return core_tokens.get(core_i).kind == kind;
 }
 
 # State advancement helpers
 
-LexState advance_past_ident(list(string) chars, LexState s) {
-    mutable LexState cs = s;
-    mutable bool running = true;
-    while running {
-        string ch = current_char(chars, cs);
-        if is_alnum(ch) {
-            cs = advance(chars, cs);
+LexState advance_past_ident(list(string) core_chars, LexState core_s) {
+    mutable LexState core_cs = core_s;
+    mutable bool core_running = true;
+    while core_running {
+        string core_ch = current_char(core_chars, core_cs);
+        if is_alnum(core_ch) {
+            core_cs = advance(core_chars, core_cs);
         } else {
-            running = false;
+            core_running = false;
         }
     }
-    return cs;
+    return core_cs;
 }
 
-LexState advance_past_number(list(string) chars, LexState s) {
-    mutable LexState cs = s;
-    mutable bool running = true;
-    while running {
-        string ch = current_char(chars, cs);
-        if is_digit(ch) {
-            cs = advance(chars, cs);
+LexState advance_past_number(list(string) core_chars, LexState core_s) {
+    mutable LexState core_cs = core_s;
+    mutable bool core_running = true;
+    while core_running {
+        string core_ch = current_char(core_chars, core_cs);
+        if is_digit(core_ch) {
+            core_cs = advance(core_chars, core_cs);
         } else {
-            running = false;
+            core_running = false;
         }
     }
-    if current_char(chars, cs) == "." and peek_char(chars, cs) != "." {
-        cs = advance(chars, cs);
-        mutable bool running_f = true;
-        while running_f {
-            string ch = current_char(chars, cs);
-            if is_digit(ch) {
-                cs = advance(chars, cs);
+    if current_char(core_chars, core_cs) == "." and peek_char(core_chars, core_cs) != "." {
+        core_cs = advance(core_chars, core_cs);
+        mutable bool core_running_f = true;
+        while core_running_f {
+            string core_ch = current_char(core_chars, core_cs);
+            if is_digit(core_ch) {
+                core_cs = advance(core_chars, core_cs);
             } else {
-                running_f = false;
+                core_running_f = false;
             }
         }
     }
-    return cs;
+    return core_cs;
 }
 
-LexState advance_past_char_lit(list(string) chars, LexState s) {
-    mutable LexState cs = advance(chars, s);
-    cs = advance(chars, cs);
-    cs = advance(chars, cs);
-    return cs;
+LexState advance_past_char_lit(list(string) core_chars, LexState core_s) {
+    mutable LexState core_cs = advance(core_chars, core_s);
+    core_cs = advance(core_chars, core_cs);
+    core_cs = advance(core_chars, core_cs);
+    return core_cs;
 }
 
-LexState advance_past_symbol(list(string) chars, LexState s, string sym) {
-    mutable LexState cs = advance(chars, s);
+LexState advance_past_symbol(list(string) core_chars, LexState core_s, string sym) {
+    mutable LexState core_cs = advance(core_chars, core_s);
     if sym == "+=" or sym == "-=" or sym == "*=" or sym == "/="
     or sym == "==" or sym == "!=" or sym == "<=" or sym == ">="
     or sym == ".." {
-        cs = advance(chars, cs);
+        core_cs = advance(core_chars, core_cs);
     }
-    return cs;
+    return core_cs;
 }

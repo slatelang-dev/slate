@@ -6,102 +6,102 @@ struct LexState {
     int col;
 }
 
-bool is_digit(string ch) {
-    return ch == "0" or ch == "1" or ch == "2" or ch == "3" or ch == "4"
-        or ch == "5" or ch == "6" or ch == "7" or ch == "8" or ch == "9";
+bool is_digit(string state_ch) {
+    return state_ch == "0" or state_ch == "1" or state_ch == "2" or state_ch == "3" or state_ch == "4"
+        or state_ch == "5" or state_ch == "6" or state_ch == "7" or state_ch == "8" or state_ch == "9";
 }
 
-bool is_alpha(string ch) {
-    return ch == "a" or ch == "b" or ch == "c" or ch == "d" or ch == "e"
-        or ch == "f" or ch == "g" or ch == "h" or ch == "i" or ch == "j"
-        or ch == "k" or ch == "l" or ch == "m" or ch == "n" or ch == "o"
-        or ch == "p" or ch == "q" or ch == "r" or ch == "s" or ch == "t"
-        or ch == "u" or ch == "v" or ch == "w" or ch == "x" or ch == "y"
-        or ch == "z"
-        or ch == "A" or ch == "B" or ch == "C" or ch == "D" or ch == "E"
-        or ch == "F" or ch == "G" or ch == "H" or ch == "I" or ch == "J"
-        or ch == "K" or ch == "L" or ch == "M" or ch == "N" or ch == "O"
-        or ch == "P" or ch == "Q" or ch == "R" or ch == "S" or ch == "T"
-        or ch == "U" or ch == "V" or ch == "W" or ch == "X" or ch == "Y"
-        or ch == "Z" or ch == "_";
+bool is_alpha(string state_ch) {
+    return state_ch == "a" or state_ch == "b" or state_ch == "c" or state_ch == "d" or state_ch == "e"
+        or state_ch == "f" or state_ch == "g" or state_ch == "h" or state_ch == "i" or state_ch == "j"
+        or state_ch == "k" or state_ch == "l" or state_ch == "m" or state_ch == "n" or state_ch == "o"
+        or state_ch == "p" or state_ch == "q" or state_ch == "r" or state_ch == "s" or state_ch == "t"
+        or state_ch == "u" or state_ch == "v" or state_ch == "w" or state_ch == "x" or state_ch == "y"
+        or state_ch == "z"
+        or state_ch == "A" or state_ch == "B" or state_ch == "C" or state_ch == "D" or state_ch == "E"
+        or state_ch == "F" or state_ch == "G" or state_ch == "H" or state_ch == "I" or state_ch == "J"
+        or state_ch == "K" or state_ch == "L" or state_ch == "M" or state_ch == "N" or state_ch == "O"
+        or state_ch == "P" or state_ch == "Q" or state_ch == "R" or state_ch == "S" or state_ch == "T"
+        or state_ch == "U" or state_ch == "V" or state_ch == "W" or state_ch == "X" or state_ch == "Y"
+        or state_ch == "Z" or state_ch == "_";
 }
 
-bool is_alnum(string ch) {
-    return is_digit(ch) or is_alpha(ch);
+bool is_alnum(string state_ch) {
+    return is_digit(state_ch) or is_alpha(state_ch);
 }
 
-bool is_whitespace(string ch) {
-    return ch == " " or ch == "\t" or ch == "\r" or ch == "\n";
+bool is_whitespace(string state_ch) {
+    return state_ch == " " or state_ch == "\t" or state_ch == "\r" or state_ch == "\n";
 }
 
 LexState new_state() {
     return LexState(pos: 0, line: 1, col: 0);
 }
 
-int state_pos(LexState s) {
-    return s.pos;
+int state_pos(LexState state_s) {
+    return state_s.pos;
 }
 
-int state_line(LexState s) {
-    return s.line;
+int state_line(LexState state_s) {
+    return state_s.line;
 }
 
-int state_col(LexState s) {
-    return s.col;
+int state_col(LexState state_s) {
+    return state_s.col;
 }
 
-string current_char(list(string) chars, LexState s) {
-    int pos = s.pos;
-    if pos >= chars.len() {
+string current_char(list(string) char_list, LexState state_s) {
+    int cur_char_pos = state_s.pos;
+    if cur_char_pos >= char_list.len() {
         return "";
     }
-    return chars.get(pos);
+    return char_list.get(cur_char_pos);
 }
 
-string peek_char(list(string) chars, LexState s) {
-    int pos = s.pos + 1;
-    if pos >= chars.len() {
+string peek_char(list(string) char_list, LexState state_s) {
+    int peek_char_pos = state_s.pos + 1;
+    if peek_char_pos >= char_list.len() {
         return "";
     }
-    return chars.get(pos);
+    return char_list.get(peek_char_pos);
 }
 
-LexState advance(list(string) chars, LexState s) {
-    string ch = current_char(chars, s);
-    int pos = s.pos + 1;
-    mutable int line = s.line;
-    mutable int col = s.col + 1;
-    if ch == "\n" {
-        line = line + 1;
-        col = 0;
+LexState advance(list(string) char_list, LexState state_s) {
+    string state_ch = current_char(char_list, state_s);
+    int adv_char_pos = state_s.pos + 1;
+    mutable int adv_line = state_s.line;
+    mutable int adv_col = state_s.col + 1;
+    if state_ch == "\n" {
+        adv_line = adv_line + 1;
+        adv_col = 0;
     }
-    return LexState(pos: pos, line: line, col: col);
+    return LexState(pos: adv_char_pos, line: adv_line, col: adv_col);
 }
 
-LexState skip_whitespace(list(string) chars, LexState s) {
-    mutable LexState cs = s;
-    mutable bool running = true;
-    while running {
-        string ch = current_char(chars, cs);
-        if is_whitespace(ch) {
-            cs = advance(chars, cs);
+LexState skip_whitespace(list(string) char_list, LexState state_s) {
+    mutable LexState state_cs = state_s;
+    mutable bool loop_running = true;
+    while loop_running {
+        string state_ch = current_char(char_list, state_cs);
+        if is_whitespace(state_ch) {
+            state_cs = advance(char_list, state_cs);
         } else {
-            running = false;
+            loop_running = false;
         }
     }
-    return cs;
+    return state_cs;
 }
 
-LexState skip_comment(list(string) chars, LexState s) {
-    mutable LexState cs = s;
-    mutable bool running = true;
-    while running {
-        string ch = current_char(chars, cs);
-        if ch == "\n" or ch == "" {
-            running = false;
+LexState skip_comment(list(string) char_list, LexState state_s) {
+    mutable LexState state_cs = state_s;
+    mutable bool loop_running = true;
+    while loop_running {
+        string state_ch = current_char(char_list, state_cs);
+        if state_ch == "\n" or state_ch == "" {
+            loop_running = false;
         } else {
-            cs = advance(chars, cs);
+            state_cs = advance(char_list, state_cs);
         }
     }
-    return cs;
+    return state_cs;
 }
