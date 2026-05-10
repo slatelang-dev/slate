@@ -5,6 +5,8 @@ use node;
 use state;
 use parsing;
 use stmt;
+use precedence;
+use constructors;
 
 # Parse match statement
 

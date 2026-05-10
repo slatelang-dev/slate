@@ -3,6 +3,8 @@ module parsing;
 use token;
 use node;
 use state;
+use expressions;
+use constructors;
 
 ParseResult parse_primary(list(Token) tokens, int pos) {
     Token t = tokens.get(pos);

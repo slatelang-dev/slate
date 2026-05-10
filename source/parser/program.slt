@@ -10,6 +10,7 @@ use control;
 use matching;
 use decl;
 use structs;
+use constructors;
 
 # Parse top-level declarations and produce a Program node
 

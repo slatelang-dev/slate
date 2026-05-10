@@ -3,6 +3,7 @@ module types;
 use token;
 use node;
 use state;
+use constructors;
 
 ParseResult parse_type(list(Token) tokens, int pos) {
     Token t = tokens.get(pos);

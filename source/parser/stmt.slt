@@ -5,6 +5,10 @@ use node;
 use state;
 use types;
 use parsing;
+use precedence;
+use control;
+use matching;
+use constructors;
 
 # Parse variable declaration
 # Forms: int x = expr  /  mutable int x = expr  /  const int x = expr  /  affine int x = expr

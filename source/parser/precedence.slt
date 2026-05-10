@@ -4,6 +4,7 @@ use token;
 use node;
 use state;
 use parsing;
+use expressions;
 
 ParseResult parse_multiplication(list(Token) tokens, int pos) {
     ParseResult result = parse_unary(tokens, pos);
