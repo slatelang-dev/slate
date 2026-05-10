@@ -53,7 +53,7 @@ ResolveResult resolve_ident(string name, int line, int col, string file, Scope s
 
 bool is_builtin(string name) {
     return name == "input" or name == "print" or name == "file"
-        or name == "run" or name == "read" or name == "read_n"
+        or name == "run" or name == "exec" or name == "read" or name == "read_n"
         or name == "write" or name == "string" or name == "int"
         or name == "float" or name == "bool" or name == "json"
         or name == "toml" or name == "tokenize" or name == "args"

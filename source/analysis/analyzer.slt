@@ -42,7 +42,7 @@ AnalysisResult merge_analysis(AnalysisResult a, AnalysisResult b) {
 Scope seed_builtins(Scope seed_scope) {
     mutable Scope seed_s = seed_scope;
     list(string) builtins = ("home", "parse", "file", "print", "read",
-        "write", "run", "input", "string", "int", "float", "bool",
+        "write", "run", "exec", "input", "string", "int", "float", "bool",
         "toml", "json", "tokenize", "alloc", "free", "memcpy",
         "strlen", "strcmp", "puts", "read_n", "time", "args");
     mutable int builtins_i = 0;
