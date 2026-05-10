@@ -133,6 +133,9 @@ Scope track_stmt_usage(Node node, Scope scope) {
     if node.kind == NodeKind.Block {
         return track_block_usage(node, scope);
     }
+    if node.kind == NodeKind.Call or node.kind == NodeKind.ExprStmt or node.kind == NodeKind.MethodCall {
+        return track_expr_usage(node, scope);
+    }
     return scope;
 }
 

@@ -56,6 +56,41 @@ Scope seed_builtins(Scope scope) {
     return s;
 }
 
+string normalize_path(string path) {
+    mutable string p = path;
+    while p.contains("//") {
+        p = p.replace("//", "/");
+    }
+    return p;
+}
+
+string resolve_module_path(string mod_name, string base_path, string home_path) {
+    string local_exports = base_path + "/" + mod_name + "/exports.slt";
+    string local_single = base_path + "/" + mod_name + ".slt";
+
+    if file(local_exports).exists() {
+        return normalize_path(local_exports);
+    }
+
+    if file(local_single).exists() {
+        return normalize_path(local_single);
+    }
+
+    string deps_dir = home_path + "/.slate/deps";
+    string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
+    string deps_lib = deps_dir + "/" + mod_name + "/source/lib.slt";
+
+    if file(deps_exports).exists() {
+        return normalize_path(deps_exports);
+    }
+
+    if file(deps_lib).exists() {
+        return normalize_path(deps_lib);
+    }
+
+    return normalize_path(local_exports);
+}
+
 # Resolve parent directory from a file path
 
 string resolve_parent_dir(string mod_path) {
@@ -69,112 +104,6 @@ string resolve_parent_dir(string mod_path) {
         i += 1;
     }
     return parent;
-}
-
-# Load and parse a module's exports, returning registered symbols
-
-Scope load_module_symbols(string mod_name, Scope scope, string file) {
-    list(string) visited = empty;
-    return load_module_symbols_inner(mod_name, scope, file, visited, 0);
-}
-
-Scope load_module_symbols_inner(string mod_name, Scope scope, string file, list(string) visited, int depth) {
-    mutable list(string) seen = visited;
-    mutable int vi = 0;
-    mutable bool already_seen = false;
-    while vi < seen.len() {
-        if seen.get(vi) == mod_name { already_seen = true; }
-        vi += 1;
-    }
-    if already_seen {
-        return scope;
-    }
-    seen = seen.add(mod_name);
-
-    string base_dir = resolve_parent_dir(file);
-    
-    mutable bool found = false;
-    mutable string mod_path = "";
-
-    string try_exports = base_dir + "/" + mod_name + "/exports.slt";
-    if file(try_exports).exists() {
-        mod_path = try_exports;
-        found = true;
-    }
-    
-    if found == false {
-        string try_single = base_dir + "/" + mod_name + ".slt";
-        if file(try_single).exists() {
-            mod_path = try_single;
-            found = true;
-        }
-    }
-    
-    if found == false {
-        string deps_exports = home() + "/.slate/deps/" + mod_name + "/source/exports.slt";
-        if file(deps_exports).exists() {
-            mod_path = deps_exports;
-            found = true;
-        }
-    }
-    
-    if found == false {
-        string deps_lib = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
-        if file(deps_lib).exists() {
-            mod_path = deps_lib;
-            found = true;
-        }
-    }
-    
-    if found == false {
-        return scope;
-    }
-    
-    string source = file(mod_path).read();
-    ParseResult parsed = parse(source);
-    if parsed.success == false {
-        return scope;
-    }
-    return register_ast_symbols_inner(parsed.node, scope, mod_path, seen, depth + 1);
-}
-
-# Register all top-level declarations from a parsed AST
-
-Scope register_ast_symbols(Node program, Scope scope, string file) {
-    list(string) visited = empty;
-    return register_ast_symbols_inner(program, scope, file, visited, 0);
-}
-
-Scope register_ast_symbols_inner(Node program, Scope scope, string file, list(string) visited, int depth) {
-    mutable Scope s = scope;
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl {
-            Node return_type = decl.children.get(0);
-            Symbol sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        if decl.kind == NodeKind.StructDecl {
-            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        if decl.kind == NodeKind.EnumDecl {
-            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        if decl.kind == NodeKind.Use {
-            s = load_module_symbols_inner(decl.value, s, file, visited, depth + 1);
-        }
-        i += 1;
-    }
-    return s;
 }
 
 # Analyse a single function declaration
@@ -240,85 +169,4 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope scope) {
     return result_out;
 }
 
-# Analyse a full program node
 
-AnalysisResult analyse(Node program, string file) {
-    return analyse_bare(program, file, false);
-}
-
-AnalysisResult analyse_bare(Node program, string file, bool is_bare) {
-    mutable AnalysisResult result_out = analysis_ok();
-    mutable Scope scope = new_scope();
-    scope = seed_builtins(scope);
-
-    # Get current module name (if declared)
-    mutable string current_mod = "";
-    mutable int j = 0;
-    while j < program.children.len() {
-        if program.children.get(j).kind == NodeKind.Module {
-            current_mod = program.children.get(j).value;
-        }
-        j += 1;
-    }
-
-    # Zero-th pass — load imported modules and register their symbols
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.Use and decl.value != current_mod {
-            scope = load_module_symbols(decl.value, scope, file);
-        }
-        i += 1;
-    }
-
-    # First pass — register all top-level function names
-    i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl {
-            Node return_type = decl.children.get(0);
-            if return_type.value == "ptr" and is_bare == false {
-                Span s = make_span(file, decl.line, decl.col, decl.value.len());
-                AnalysisError err = make_error(
-                    ErrorKind.InvalidUse,
-                    "ptr type requires bare mode",
-                    "Add bare = true to your slate.toml to use ptr",
-                    s
-                );
-                result_out = AnalysisResult(errors: result_out.errors.add(err), warnings: result_out.warnings);
-            }
-            Symbol fn_sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(scope, decl.value) {
-                # Symbol exists - could be from use or from module registry. Skip silently.
-            } else {
-                scope = declare_symbol(scope, fn_sym);
-            }
-        }
-        if decl.kind == NodeKind.StructDecl {
-            Symbol struct_sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(scope, decl.value) == false {
-                scope = declare_symbol(scope, struct_sym);
-            }
-        }
-        if decl.kind == NodeKind.EnumDecl {
-            Symbol enum_sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(scope, decl.value) == false {
-                scope = declare_symbol(scope, enum_sym);
-            }
-        }
-        i += 1;
-    }
-
-    # Second pass — analyse each function body
-    i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl {
-            AnalysisResult fn_result = analyse_fn(decl, file, scope);
-            result_out = merge_analysis(result_out, fn_result);
-        }
-        i += 1;
-    }
-
-    return result_out;
-}
