@@ -1,0 +1,34 @@
+module resolver_helpers;
+
+use ast;
+use diagnostics;
+
+struct ResolveResult {
+    list(AnalysisError) errors;
+    list(AnalysisWarning) warnings;
+    Scope scope;
+}
+
+ResolveResult make_resolve_result(list(AnalysisError) errors, list(AnalysisWarning) warnings, Scope scope) {
+    return ResolveResult(errors: errors, warnings: warnings, scope: scope);
+}
+
+ResolveResult empty_resolve_result(Scope scope) {
+    return ResolveResult(errors: empty, warnings: empty, scope: scope);
+}
+
+ResolveResult merge_results(ResolveResult a, ResolveResult b) {
+    mutable list(AnalysisError) errors = a.errors;
+    mutable list(AnalysisWarning) warnings = a.warnings;
+    mutable int i = 0;
+    while i < b.errors.len() {
+        errors = errors.add(b.errors.get(i));
+        i += 1;
+    }
+    i = 0;
+    while i < b.warnings.len() {
+        warnings = warnings.add(b.warnings.get(i));
+        i += 1;
+    }
+    return ResolveResult(errors: errors, warnings: warnings, scope: b.scope);
+}
