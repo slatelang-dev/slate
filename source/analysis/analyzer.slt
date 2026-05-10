@@ -56,41 +56,6 @@ Scope seed_builtins(Scope scope) {
     return s;
 }
 
-string normalize_path(string path) {
-    mutable string p = path;
-    while p.contains("//") {
-        p = p.replace("//", "/");
-    }
-    return p;
-}
-
-string resolve_module_path(string mod_name, string base_path, string home_path) {
-    string local_exports = base_path + "/" + mod_name + "/exports.slt";
-    string local_single = base_path + "/" + mod_name + ".slt";
-
-    if file(local_exports).exists() {
-        return normalize_path(local_exports);
-    }
-
-    if file(local_single).exists() {
-        return normalize_path(local_single);
-    }
-
-    string deps_dir = home_path + "/.slate/deps";
-    string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
-    string deps_lib = deps_dir + "/" + mod_name + "/source/lib.slt";
-
-    if file(deps_exports).exists() {
-        return normalize_path(deps_exports);
-    }
-
-    if file(deps_lib).exists() {
-        return normalize_path(deps_lib);
-    }
-
-    return normalize_path(local_exports);
-}
-
 # Resolve parent directory from a file path
 
 string resolve_parent_dir(string mod_path) {
