@@ -49,6 +49,14 @@ ParseResult parse_program(list(Token) tokens) {
                 cur = after_semi;
             }
 
+            # forward declaration
+            else if t.kind == TokenKind.Forward {
+                ParseResult result = parse_forward_decl(tokens, cur);
+                if result.success == false { return result; }
+                decls = decls.add(result.node);
+                cur = result.pos;
+            }
+
             # struct declaration
             else if t.kind == TokenKind.Struct {
                 ParseResult result = parse_struct_decl(tokens, cur);

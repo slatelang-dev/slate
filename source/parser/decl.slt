@@ -54,6 +54,36 @@ ParseResult parse_params(list(Token) tokens, int pos) {
     return parse_ok(make_block(params, line, col), after_rparen);
 }
 
+# Parse forward declaration: forward return_type name(params);
+
+ParseResult parse_forward_decl(list(Token) tokens, int pos) {
+    int line = tokens.get(pos).line;
+    int col = tokens.get(pos).col;
+    int cur = pos + 1;
+
+    ParseResult return_type = parse_type(tokens, cur);
+    if return_type.success == false { return return_type; }
+    cur = return_type.pos;
+
+    Token name_tok = tokens.get(cur);
+    if name_tok.kind != TokenKind.Ident {
+        return parse_err(expect_error("function name", tokens, cur), cur);
+    }
+    string fn_name = name_tok.value;
+    cur = cur + 1;
+
+    ParseResult params = parse_params(tokens, cur);
+    if params.success == false { return params; }
+    cur = params.pos;
+
+    int after_semi = expect_semicolon(tokens, cur);
+    if after_semi == -1 {
+        return parse_err(expect_error("; after forward declaration", tokens, cur), cur);
+    }
+
+    return parse_ok(make_forward_decl(fn_name, return_type.node, params.node.children, line, col), after_semi);
+}
+
 # Parse function declaration: [private] return_type name(params) { body }
 
 ParseResult parse_fn_decl(list(Token) tokens, int pos) {

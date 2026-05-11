@@ -10,7 +10,7 @@ enum TokenKind {
     Void, Empty, None, Some,
     Ok, Error,
     Is, As,
-    Use, Module,
+    Use, Module, Forward,
     Struct, Enum,
     Private, Const, Mutable, Affine, Bare,
     Generic, Range,

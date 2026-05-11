@@ -151,6 +151,19 @@ Node make_variant(string name, list(Node) payload, int line, int col) {
     return Node(kind: NodeKind.Variant, value: name, line: line, col: col, children: payload);
 }
 
+# ForwardDecl — value is function name, child 0 is return type, rest are params
+# A forward declaration has no body — just the signature
+
+Node make_forward_decl(string name, Node return_type, list(Node) params, int line, int col) {
+    mutable list(Node) children = (return_type,);
+    mutable int i = 0;
+    while i < params.len() {
+        children = children.add(params.get(i));
+        i += 1;
+    }
+    return Node(kind: NodeKind.ForwardDecl, value: name, line: line, col: col, children: children);
+}
+
 # FnDecl — value is function name, child 0 is return type, rest are params then body block
 # The body block is always the last child
 
