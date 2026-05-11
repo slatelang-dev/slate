@@ -6,7 +6,6 @@ enum NodeKind {
 
     # Declarations
     FnDecl,
-    ForwardDecl,
     StructDecl,
     EnumDecl,
     Param,
@@ -60,6 +59,7 @@ enum NodeKind {
     TypeTable,
     TypeGeneric,
     TypeVoid,
+    ForwardDecl,
 }
 
 struct Node {

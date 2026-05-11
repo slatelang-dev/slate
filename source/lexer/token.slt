@@ -10,7 +10,7 @@ enum TokenKind {
     Void, Empty, None, Some,
     Ok, Error,
     Is, As,
-    Use, Module, Forward,
+    Use, Module,
     Struct, Enum,
     Private, Const, Mutable, Affine, Bare,
     Generic, Range,
@@ -31,7 +31,7 @@ enum TokenKind {
     LParen, RParen, LBrace, RBrace, LBracket, RBracket,
     Semicolon, Comma, Colon, Dot, DotDot,
     # Special
-    Eof, Illegal,
+    Eof, Illegal, Forward,
 }
 
 struct Token {
