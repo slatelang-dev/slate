@@ -5,6 +5,7 @@ use symbols;
 use diagnostics;
 use span;
 use resolver;
+use resolver_helpers;
 use checker;
 use mutability;
 use returns;

@@ -2,6 +2,8 @@ module resolver_helpers;
 
 use ast;
 use diagnostics;
+use symbols;
+use span;
 
 struct ResolveResult {
     list(AnalysisError) errors;
@@ -15,6 +17,35 @@ ResolveResult make_resolve_result(list(AnalysisError) errors, list(AnalysisWarni
 
 ResolveResult empty_resolve_result(Scope scope) {
     return ResolveResult(errors: empty, warnings: empty, scope: scope);
+}
+
+bool is_builtin(string name) {
+    return name == "input" or name == "print" or name == "file"
+        or name == "run" or name == "exec" or name == "read" or name == "read_n"
+        or name == "write" or name == "string" or name == "int"
+        or name == "float" or name == "bool" or name == "json"
+        or name == "toml" or name == "tokenize" or name == "args"
+        or name == "home" or name == "time";
+}
+
+ResolveResult declare_var(string name, string type_name, NodeKind kind, int line, int col, string file, Scope scope) {
+    if symbol_exists_in_current_scope(scope, name) {
+        Span s = make_span(file, line, col, name.len());
+        AnalysisError err = duplicate_variable(name, s);
+        return ResolveResult(errors: (err,), warnings: empty, scope: scope);
+    }
+    mutable Symbol sym = make_var(name, type_name, line, col);
+    if kind == NodeKind.MutableDecl {
+        sym = make_mutable_var(name, type_name, line, col);
+    } else if kind == NodeKind.ConstDecl {
+        sym = make_const_var(name, type_name, line, col);
+    } else if kind == NodeKind.AffineDecl {
+        sym = make_var(name, type_name, line, col);
+    } else if kind == NodeKind.Param {
+        sym = make_param(name, type_name, line, col);
+    }
+    Scope new_scope = declare_symbol(scope, sym);
+    return empty_resolve_result(new_scope);
 }
 
 ResolveResult merge_results(ResolveResult a, ResolveResult b) {

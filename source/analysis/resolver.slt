@@ -22,15 +22,6 @@ ResolveResult resolve_ident(string name, int line, int col, string file, Scope s
 
 # Resolve a function call — check function exists and arg count matches
 
-bool is_builtin(string name) {
-    return name == "input" or name == "print" or name == "file"
-        or name == "run" or name == "exec" or name == "read" or name == "read_n"
-        or name == "write" or name == "string" or name == "int"
-        or name == "float" or name == "bool" or name == "json"
-        or name == "toml" or name == "tokenize" or name == "args"
-        or name == "home" or name == "time";
-}
-
 ResolveResult resolve_call(string name, int arg_count, int line, int col, string file, Scope scope) {
     if is_builtin(name) {
         return empty_resolve_result(scope);
@@ -42,28 +33,6 @@ ResolveResult resolve_call(string name, int arg_count, int line, int col, string
         return ResolveResult(errors: (err,), warnings: empty, scope: scope);
     }
     return empty_resolve_result(scope);
-}
-
-# Declare a variable in scope — check for duplicates
-
-ResolveResult declare_var(string name, string type_name, NodeKind kind, int line, int col, string file, Scope scope) {
-    if symbol_exists_in_current_scope(scope, name) {
-        Span s = make_span(file, line, col, name.len());
-        AnalysisError err = duplicate_variable(name, s);
-        return ResolveResult(errors: (err,), warnings: empty, scope: scope);
-    }
-    mutable Symbol sym = make_var(name, type_name, line, col);
-    if kind == NodeKind.MutableDecl {
-        sym = make_mutable_var(name, type_name, line, col);
-    } else if kind == NodeKind.ConstDecl {
-        sym = make_const_var(name, type_name, line, col);
-    } else if kind == NodeKind.AffineDecl {
-        sym = make_var(name, type_name, line, col);
-    } else if kind == NodeKind.Param {
-        sym = make_param(name, type_name, line, col);
-    }
-    Scope new_scope = declare_symbol(scope, sym);
-    return empty_resolve_result(new_scope);
 }
 
 # Resolve an expression node
