@@ -59,7 +59,7 @@ ParseResult parse_params(list(Token) tokens, int pos) {
 ParseResult parse_forward_decl(list(Token) tokens, int pos) {
     int line = tokens.get(pos).line;
     int col = tokens.get(pos).col;
-    int cur = pos + 1;
+    mutable int cur = pos + 1;
 
     ParseResult return_type = parse_type(tokens, cur);
     if return_type.success == false { return return_type; }
