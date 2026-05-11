@@ -31,7 +31,7 @@ enum TokenKind {
     LParen, RParen, LBrace, RBrace, LBracket, RBracket,
     Semicolon, Comma, Colon, Dot, DotDot,
     # Special
-    Eof, Illegal, Forward,
+    Eof, Illegal,
 }
 
 struct Token {

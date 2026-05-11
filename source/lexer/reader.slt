@@ -28,7 +28,6 @@ TokenKind keyword_or_ident(string kw_value) {
         "as":      return TokenKind.As;
         "use":     return TokenKind.Use;
         "module":  return TokenKind.Module;
-        "forward": return TokenKind.Forward;
         "struct":  return TokenKind.Struct;
         "enum":    return TokenKind.Enum;
         "private": return TokenKind.Private;
