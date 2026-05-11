@@ -59,7 +59,6 @@ enum NodeKind {
     TypeTable,
     TypeGeneric,
     TypeVoid,
-    ForwardDecl,
 }
 
 struct Node {
