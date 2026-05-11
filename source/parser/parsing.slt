@@ -7,8 +7,6 @@ use expressions;
 use constructors;
 use parse_primary;
 
-forward ParseResult parse_postfix(list(Token) tokens, int pos);
-
 ParseResult parse_postfix(list(Token) tokens, int pos) {
     ParseResult result = parse_primary(tokens, pos);
     if result.success == false { return result; }
