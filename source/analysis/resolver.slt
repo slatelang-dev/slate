@@ -57,6 +57,8 @@ ResolveResult declare_var(string name, string type_name, NodeKind kind, int line
         sym = make_mutable_var(name, type_name, line, col);
     } else if kind == NodeKind.ConstDecl {
         sym = make_const_var(name, type_name, line, col);
+    } else if kind == NodeKind.AffineDecl {
+        sym = make_var(name, type_name, line, col);
     } else if kind == NodeKind.Param {
         sym = make_param(name, type_name, line, col);
     }

@@ -32,20 +32,6 @@ string ansi(int color_code, string msg_text) {
     return ansi_fg(color_code) + msg_text + ansi_reset();
 }
 
-string hex(string color_code, string msg_text) {
-    # Parse #rrggbb or rrggbb
-    mutable string hex_c = color_code;
-    if hex_c.starts_with("#") {
-        hex_c = hex_c.replace("#", "");
-    }
-    string rs = hex_c.split("").get(0) + hex_c.split("").get(1);
-    string gs = hex_c.split("").get(2) + hex_c.split("").get(3);
-    string bs = hex_c.split("").get(4) + hex_c.split("").get(5);
-    # Bootstrap limitation: no hex parsing yet, fall back to plain text
-    # TODO: implement hex -> int conversion post-self-hosting
-    return msg_text;
-}
-
 # Named colors
 
 string red(string msg_text) {
