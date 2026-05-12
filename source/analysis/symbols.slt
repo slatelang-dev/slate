@@ -125,8 +125,18 @@ Scope push_scope(Scope scope) {
     return Scope(symbols: scope.symbols, depth: scope.depth + 1, sym_index: scope.sym_index);
 }
 
+list(Symbol) copy_symbols(list(Symbol) src) {
+    mutable list(Symbol) result = empty;
+    mutable int i = 0;
+    while i < src.len() {
+        result = result.add(src.get(i));
+        i += 1;
+    }
+    return result;
+}
+
 Scope create_child_scope(Scope parent) {
-    return Scope(symbols: parent.symbols, depth: parent.depth + 1, sym_index: empty);
+    return Scope(symbols: copy_symbols(parent.symbols), depth: parent.depth + 1, sym_index: empty);
 }
 
 Scope pop_scope(Scope scope) {
