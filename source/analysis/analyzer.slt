@@ -134,3 +134,47 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
 
     return result_out;
 }
+
+bool is_new_error(AnalysisError err, list(AnalysisError) known) {
+    mutable int i = 0;
+    while i < known.len() {
+        AnalysisError existing = known.get(i);
+        if existing.kind == err.kind
+        and existing.location.file == err.location.file
+        and existing.location.line == err.location.line
+        and existing.location.col == err.location.col {
+            return false;
+        }
+        i += 1;
+    }
+    return true;
+}
+
+AnalysisResult verify_fn(Node fn_node, string file, Scope fn_scope, list(AnalysisError) known_errors) {
+    mutable AnalysisResult result_out = analysis_ok();
+    Node body = fn_node.children.get(fn_node.children.len() - 1);
+
+    Scope verify_scope = create_child_scope(fn_scope);
+
+    mutable Scope cur = verify_scope;
+    mutable int fn_i = 1;
+    while fn_i < fn_node.children.len() - 1 {
+        Node param = fn_node.children.get(fn_i);
+        string param_type = param.children.get(0).value;
+        ResolveResult decl = declare_var(param.value, param_type, NodeKind.Param, param.line, param.col, file, cur);
+        cur = decl.scope;
+        fn_i += 1;
+    }
+
+    ResolveResult resolve = resolve_block(body, file, cur);
+    mutable int fi = 0;
+    while fi < resolve.errors.len() {
+        AnalysisError err = resolve.errors.get(fi);
+        if is_new_error(err, known_errors) {
+            result_out = AnalysisResult(errors: result_out.errors.add(err), warnings: result_out.warnings);
+        }
+        fi += 1;
+    }
+
+    return result_out;
+}
