@@ -11,8 +11,6 @@ use mutability;
 use returns;
 use usage;
 
-# Top-level analysis result
-
 struct AnalysisResult {
     list(AnalysisError) errors;
     list(AnalysisWarning) warnings;
@@ -38,8 +36,6 @@ AnalysisResult merge_analysis(AnalysisResult a, AnalysisResult b) {
     return AnalysisResult(errors: merge_errors, warnings: merge_warnings);
 }
 
-# Seed builtins into scope before module loading
-
 Scope seed_builtins(Scope seed_scope) {
     mutable Scope seed_s = seed_scope;
     list(string) builtins = ("home", "parse", "file", "print", "read",
@@ -57,8 +53,6 @@ Scope seed_builtins(Scope seed_scope) {
     return seed_s;
 }
 
-# Resolve parent directory from a file path
-
 string resolve_parent_dir(string mod_path) {
     list(string) parts = mod_path.split("/");
     if parts.len() <= 1 { return ""; }
@@ -72,37 +66,12 @@ string resolve_parent_dir(string mod_path) {
     return parent;
 }
 
-# Analyse a single function declaration
-
-    AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
+AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     mutable AnalysisResult result_out = analysis_ok();
     string fn_name = fn_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
 
-    option(Symbol) check_node = lookup_symbol(fn_scope, "Node");
-    option(Symbol) check_nk = lookup_symbol(fn_scope, "NodeKind");
-    print("[debug] analyse_fn '" + fn_name + "': Node found=" + string(check_node.exists()) + ", NodeKind found=" + string(check_nk.exists()) + ", scope.depth=" + string(fn_scope.depth) + ", sym_count=" + string(fn_scope.symbols.len()));
-    if fn_name == "make_type" {
-        mutable int di = 0;
-        while di < fn_scope.symbols.len() {
-            Symbol ds = fn_scope.symbols.get(di);
-            if ds.name == "Node" or ds.name == "NodeKind" or ds.name.starts_with("NodeKind.") {
-                print("[debug]   sym[" + string(di) + "]: '" + ds.name + "' depth=" + string(ds.scope_depth) + " used=" + string(ds.used));
-            }
-            di += 1;
-        }
-    }
-    if check_node.exists() == false {
-        print("[debug] EMIT scope dump for " + fn_name + ":");
-        mutable int di2 = 0;
-        while di2 < fn_scope.symbols.len() {
-            Symbol ds2 = fn_scope.symbols.get(di2);
-            if di2 < 10 or ds2.name == "Node" or ds2.name == "NodeKind" or ds2.name == "make_type" or ds2.name == "parse" {
-                print("[debug]   sym[" + string(di2) + "]: '" + ds2.name + "' depth=" + string(ds2.scope_depth));
-            }
-            di2 += 1;
-        }
-    }
+    print("[debug] analyse_fn START '" + fn_name + "': sym_count=" + string(fn_scope.symbols.len()) + " depth=" + string(fn_scope.depth));
 
     Scope analyse_scope = create_child_scope(fn_scope);
 
@@ -120,8 +89,10 @@ string resolve_parent_dir(string mod_path) {
         cur_scope = decl.scope;
         fn_i += 1;
     }
+    print("[debug]   after params: outer_sym=" + string(fn_scope.symbols.len()) + " inner_sym=" + string(cur_scope.symbols.len()));
 
     ResolveResult resolve = resolve_block(body, file, cur_scope);
+    print("[debug]   after resolve: outer_sym=" + string(fn_scope.symbols.len()) + " resolve_sym=" + string(resolve.scope.symbols.len()));
     mutable int fn_k = 0;
     while fn_k < resolve.errors.len() {
         result_out = AnalysisResult(errors: result_out.errors.add(resolve.errors.get(fn_k)), warnings: result_out.warnings);
@@ -129,6 +100,7 @@ string resolve_parent_dir(string mod_path) {
     }
 
     CheckResult check = check_stmt(body, resolve.scope, file);
+    print("[debug]   after check: outer_sym=" + string(fn_scope.symbols.len()));
     mutable int fn_m = 0;
     while fn_m < check.errors.len() {
         result_out = AnalysisResult(errors: result_out.errors.add(check.errors.get(fn_m)), warnings: result_out.warnings);
@@ -136,6 +108,7 @@ string resolve_parent_dir(string mod_path) {
     }
 
     MutResult mut_result = check_mut_block(body, file, resolve.scope);
+    print("[debug]   after mut: outer_sym=" + string(fn_scope.symbols.len()));
     mutable int fn_n = 0;
     while fn_n < mut_result.errors.len() {
         result_out = AnalysisResult(errors: result_out.errors.add(mut_result.errors.get(fn_n)), warnings: result_out.warnings);
@@ -150,12 +123,14 @@ string resolve_parent_dir(string mod_path) {
     }
 
     Scope tracked = track_block_usage(body, resolve.scope);
+    print("[debug]   after track_usage: outer_sym=" + string(fn_scope.symbols.len()) + " tracked_sym=" + string(tracked.symbols.len()));
     UsageResult used = warn_unused(tracked, file);
     mutable int fn_q = 0;
     while fn_q < used.warnings.len() {
         result_out = AnalysisResult(errors: result_out.errors, warnings: result_out.warnings.add(used.warnings.get(fn_q)));
         fn_q += 1;
     }
+    print("[debug] analyse_fn END '" + fn_name + "': outer_sym=" + string(fn_scope.symbols.len()));
 
     return result_out;
 }
