@@ -111,6 +111,9 @@ Scope track_expr_usage(Node node, Scope scope) {
     if node.kind == NodeKind.Is {
         return track_expr_usage(node.children.get(0), scope);
     }
+    if node.kind == NodeKind.Field {
+        return track_expr_usage(node.children.get(0), scope);
+    }
     return scope;
 }
 
