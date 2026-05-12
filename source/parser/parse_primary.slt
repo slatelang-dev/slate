@@ -21,10 +21,13 @@ ParseResult parse_args(list(Token) tokens, int pos) {
             running = false;
         } else {
             if check(tokens, cur + 1, TokenKind.Colon) {
+                string field_name = tokens.get(cur).value;
+                int field_line = tokens.get(cur).line;
+                int field_col = tokens.get(cur).col;
                 cur = cur + 2;
                 ParseResult val = parse_expr(tokens, cur);
                 if val.success == false { return val; }
-                args = args.add(val.node);
+                args = args.add(make_field(field_name, val.node, field_line, field_col));
                 cur = val.pos;
             } else {
                 ParseResult arg = parse_expr(tokens, cur);
