@@ -159,7 +159,7 @@ UsageResult warn_unused(Scope scope, string file) {
     while i < scope.symbols.len() {
         Symbol sym = scope.symbols.get(i);
         if sym.used == false {
-            bool at_depth = sym.scope_depth == scope.depth;
+            mutable bool at_depth = sym.scope_depth == scope.depth;
             if sym.kind == SymbolKind.Param {
                 at_depth = sym.scope_depth >= scope.depth - 1;
             }
