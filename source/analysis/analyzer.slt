@@ -76,9 +76,11 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     Scope analyse_scope = create_child_scope(fn_scope);
 
     mutable Scope cur_scope = analyse_scope;
+    print("[debug]     cur initial sym_count=" + string(cur_scope.symbols.len()) + " outer=" + string(fn_scope.symbols.len()));
     mutable int fn_i = 1;
     while fn_i < fn_node.children.len() - 1 {
         Node param = fn_node.children.get(fn_i);
+        print("[debug]     param " + string(fn_i) + ": '" + param.value + "' type='" + param.children.get(0).value + "' pre: out=" + string(fn_scope.symbols.len()) + " cur=" + string(cur_scope.symbols.len()));
         string param_type = param.children.get(0).value;
         ResolveResult decl = declare_var(param.value, param_type, NodeKind.Param, param.line, param.col, file, cur_scope);
         mutable int fn_j = 0;
@@ -87,9 +89,9 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
             fn_j += 1;
         }
         cur_scope = decl.scope;
+        print("[debug]     param " + string(fn_i) + " post: out=" + string(fn_scope.symbols.len()) + " cur=" + string(cur_scope.symbols.len()));
         fn_i += 1;
     }
-    print("[debug]   after params: outer_sym=" + string(fn_scope.symbols.len()) + " inner_sym=" + string(cur_scope.symbols.len()));
 
     ResolveResult resolve = resolve_block(body, file, cur_scope);
     print("[debug]   after resolve: outer_sym=" + string(fn_scope.symbols.len()) + " resolve_sym=" + string(resolve.scope.symbols.len()));
