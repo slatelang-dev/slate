@@ -79,6 +79,20 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     string fn_name = fn_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
 
+    option(Symbol) check_node = lookup_symbol(fn_scope, "Node");
+    option(Symbol) check_nk = lookup_symbol(fn_scope, "NodeKind");
+    print("[debug] analyse_fn '" + fn_name + "': Node found=" + string(check_node.exists()) + ", NodeKind found=" + string(check_nk.exists()) + ", scope.depth=" + string(fn_scope.depth) + ", sym_count=" + string(fn_scope.symbols.len()));
+    if fn_name == "make_type" {
+        mutable int di = 0;
+        while di < fn_scope.symbols.len() {
+            Symbol ds = fn_scope.symbols.get(di);
+            if ds.name == "Node" or ds.name == "NodeKind" or ds.name.starts_with("NodeKind.") {
+                print("[debug]   sym[" + string(di) + "]: '" + ds.name + "' depth=" + string(ds.scope_depth) + " used=" + string(ds.used));
+            }
+            di += 1;
+        }
+    }
+
     Scope analyse_scope = create_child_scope(fn_scope);
 
     mutable Scope cur_scope = analyse_scope;
