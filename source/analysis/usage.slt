@@ -42,6 +42,9 @@ Scope mark_used(string name, Scope scope) {
                 name: sym.name,
                 type_name: sym.type_name,
                 kind: sym.kind,
+                is_mutable: sym.is_mutable,
+                is_constant: sym.is_constant,
+                is_affine: sym.is_affine,
                 initialized: sym.initialized,
                 used: true,
                 scope_depth: sym.scope_depth,
@@ -54,7 +57,7 @@ Scope mark_used(string name, Scope scope) {
         }
         i += 1;
     }
-    return Scope(symbols: updated, depth: scope.depth);
+    return Scope(symbols: updated, depth: scope.depth, sym_index: scope.sym_index);
 }
 
 # Track identifier usage in an expression
