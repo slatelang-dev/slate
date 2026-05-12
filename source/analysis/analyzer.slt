@@ -74,7 +74,7 @@ string resolve_parent_dir(string mod_path) {
 
 # Analyse a single function declaration
 
-AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
+    AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     mutable AnalysisResult result_out = analysis_ok();
     string fn_name = fn_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
@@ -90,6 +90,17 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
                 print("[debug]   sym[" + string(di) + "]: '" + ds.name + "' depth=" + string(ds.scope_depth) + " used=" + string(ds.used));
             }
             di += 1;
+        }
+    }
+    if check_node.exists() == false {
+        print("[debug] EMIT scope dump for " + fn_name + ":");
+        mutable int di2 = 0;
+        while di2 < fn_scope.symbols.len() {
+            Symbol ds2 = fn_scope.symbols.get(di2);
+            if di2 < 10 or ds2.name == "Node" or ds2.name == "NodeKind" or ds2.name == "make_type" or ds2.name == "parse" {
+                print("[debug]   sym[" + string(di2) + "]: '" + ds2.name + "' depth=" + string(ds2.scope_depth));
+            }
+            di2 += 1;
         }
     }
 
