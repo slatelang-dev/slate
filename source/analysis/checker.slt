@@ -50,6 +50,7 @@ string infer_literal_type(Node node) {
 
 bool types_compatible(string expected, string got) {
     if expected == got          { return true; }
+    if expected == ""    { return true; }
     if expected == "unknown"    { return true; }
     if got == "unknown"         { return true; }
     if got == "void"    { return true; }
