@@ -46,19 +46,39 @@ string render_location(Span s) {
 # Render a single error
 
 string error_kind_label(ErrorKind kind) {
-    string s = string(kind);
-    if s.starts_with("ErrorKind.") {
-        return s.replace("ErrorKind.", "");
+    match kind {
+        ErrorKind.UndefinedVariable:  return "UndefinedVar";
+        ErrorKind.UndefinedFunction:  return "UndefinedFn";
+        ErrorKind.DuplicateVariable:  return "DuplicateVar";
+        ErrorKind.DuplicateFunction:  return "DuplicateFn";
+        ErrorKind.DuplicateParam:     return "DuplicateParam";
+        ErrorKind.DuplicateField:     return "DuplicateField";
+        ErrorKind.TypeMismatch:       return "TypeMismatch";
+        ErrorKind.InvalidAssignment:  return "InvalidAssign";
+        ErrorKind.InvalidReturn:      return "InvalidReturn";
+        ErrorKind.InvalidArgCount:    return "InvalidArgCount";
+        ErrorKind.InvalidArgType:     return "InvalidArgType";
+        ErrorKind.InvalidCondition:   return "InvalidCondition";
+        ErrorKind.InvalidOperand:     return "InvalidOperand";
+        ErrorKind.ImmutableAssignment: return "ImmutableAssign";
+        ErrorKind.UninitializedVariable: return "UninitializedVar";
+        ErrorKind.MissingReturn:      return "MissingReturn";
+        ErrorKind.UnreachableCode:    return "UnreachableCode";
+        ErrorKind.InvalidUse:         return "InvalidUse";
+        ErrorKind.CircularUse:        return "CircularUse";
+        else: return "Unknown";
     }
-    return s;
 }
 
 string warning_kind_label(WarnKind kind) {
-    string s = string(kind);
-    if s.starts_with("WarnKind.") {
-        return s.replace("WarnKind.", "");
+    match kind {
+        WarnKind.UnusedVariable:  return "UnusedVar";
+        WarnKind.UnusedFunction:  return "UnusedFn";
+        WarnKind.UnusedImport:    return "UnusedImport";
+        WarnKind.UnreachableCode: return "UnreachableCode";
+        WarnKind.RedundantReturn: return "RedundantReturn";
+        else: return "Unknown";
     }
-    return s;
 }
 
 string render_error(AnalysisError err, string source) {
