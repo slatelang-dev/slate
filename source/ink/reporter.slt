@@ -1,0 +1,23 @@
+module reporter;
+
+use colors;
+
+void done(string msg) {
+    print(bold_green("✓") + " " + msg);
+}
+
+void err(string msg) {
+    print(bold_red("error") + ": " + msg);
+}
+
+void warn(string msg) {
+    print(bold_yellow("warning") + ": " + msg);
+}
+
+void info(string msg) {
+    print(gray("info") + ": " + msg);
+}
+
+void hint(string msg) {
+    print(gray("hint") + ": " + msg);
+}
