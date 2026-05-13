@@ -93,7 +93,10 @@ ReturnResult check_stmt_returns(Node node, string fn_name, string return_type, s
             if arm.value == "else" {
                 has_else = true;
             }
-            ReturnResult arm_r = check_block_returns(arm.children.get(arm.children.len() - 1), fn_name, return_type, file);
+            mutable ReturnResult arm_r = return_ok(false);
+            if arm.children.len() > 0 {
+                arm_r = check_block_returns(arm.children.get(arm.children.len() - 1), fn_name, return_type, file);
+            }
             mutable int j = 0;
             while j < arm_r.errors.len() {
                 errors = errors.add(arm_r.errors.get(j));

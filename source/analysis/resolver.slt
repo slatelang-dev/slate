@@ -139,8 +139,11 @@ ResolveResult resolve_stmt(Node node, string file, Scope scope) {
             Node arm = node.children.get(i);
             Scope inner = push_scope(r.scope);
             mutable ResolveResult arm_r = empty_resolve_result(inner);
-            if arm.value == "expr" {
+            if arm.value == "expr" or arm.value == "range" {
                 arm_r = resolve_expr(arm.children.get(0), file, inner);
+                if arm.value == "range" {
+                    arm_r = merge_results(arm_r, resolve_expr(arm.children.get(1), file, arm_r.scope));
+                }
                 ResolveResult body_r = resolve_block(arm.children.get(arm.children.len() - 1), file, arm_r.scope);
                 arm_r = merge_results(arm_r, body_r);
             } else {

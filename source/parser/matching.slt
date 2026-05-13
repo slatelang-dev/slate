@@ -59,6 +59,14 @@ ParseResult parse_match(list(Token) tokens, int pos) {
                 if pat.success == false { return pat; }
                 arm_children = arm_children.add(pat.node);
                 cur = pat.pos;
+                if check(tokens, cur, TokenKind.Ident) and tokens.get(cur).value == "to" {
+                    cur = cur + 1;
+                    ParseResult high = parse_expr(tokens, cur);
+                    if high.success == false { return high; }
+                    arm_children = arm_children.add(high.node);
+                    cur = high.pos;
+                    pattern_kind = "range";
+                }
             }
 
             int after_colon = expect_colon(tokens, cur);
