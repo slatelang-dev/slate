@@ -182,6 +182,15 @@ CheckResult check_stmt(Node node, Scope scope, string file) {
         }
         return check_ok("void");
     }
+    if node.kind == NodeKind.Block {
+        mutable CheckResult r = check_ok("void");
+        mutable int bi = 0;
+        while bi < node.children.len() {
+            r = merge_check(r, check_stmt(node.children.get(bi), scope, file));
+            bi += 1;
+        }
+        return r;
+    }
     if node.kind == NodeKind.If or node.kind == NodeKind.While {
         CheckResult cond = check_expr(node.children.get(0), scope, file);
         if cond.inferred_type != "bool" and cond.inferred_type != "unknown" {
@@ -189,7 +198,12 @@ CheckResult check_stmt(Node node, Scope scope, string file) {
             AnalysisError err = make_error(ErrorKind.InvalidCondition, "Condition must be bool", "Use a boolean expression here", s);
             return merge_check(cond, check_err(err));
         }
-        return cond;
+        mutable CheckResult r = cond;
+        r = merge_check(r, check_stmt(node.children.get(1), scope, file));
+        if node.kind == NodeKind.If and node.children.len() > 2 {
+            r = merge_check(r, check_stmt(node.children.get(2), scope, file));
+        }
+        return r;
     }
     return check_ok("void");
 }
