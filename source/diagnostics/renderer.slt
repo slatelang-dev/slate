@@ -45,9 +45,25 @@ string render_location(Span s) {
 
 # Render a single error
 
+string error_kind_label(ErrorKind kind) {
+    string s = string(kind);
+    if s.starts_with("ErrorKind.") {
+        return s.replace("ErrorKind.", "");
+    }
+    return s;
+}
+
+string warning_kind_label(WarnKind kind) {
+    string s = string(kind);
+    if s.starts_with("WarnKind.") {
+        return s.replace("WarnKind.", "");
+    }
+    return s;
+}
+
 string render_error(AnalysisError err, string source) {
     mutable string out = "";
-    out = out + bold_red("Error") + gray(": ") + err.message + "\n";
+    out = out + bold_red("Error") + gray("[") + error_kind_label(err.kind) + gray("]") + gray(": ") + err.message + "\n";
     out = out + render_location(err.location) + "\n";
     out = out + gray("  │\n");
     out = out + render_source(err.location, source) + "\n";
@@ -60,7 +76,7 @@ string render_error(AnalysisError err, string source) {
 
 string render_warning(AnalysisWarning warn, string source) {
     mutable string out = "";
-    out = out + bold_yellow("Warning") + gray(": ") + warn.message + "\n";
+    out = out + bold_yellow("Warning") + gray("[") + warning_kind_label(warn.kind) + gray("]") + gray(": ") + warn.message + "\n";
     out = out + render_location(warn.location) + "\n";
     out = out + gray("  │\n");
     out = out + render_source(warn.location, source) + "\n";
