@@ -98,14 +98,28 @@ ParseResult parse_match(list(Token) tokens, int pos) {
                             if check(tokens, cur + 1, TokenKind.Colon) {
                                 is_new_arm = true;
                             }
+                            if check(tokens, cur + 1, TokenKind.Ident) and tokens.get(cur + 1).value == "to" {
+                                is_new_arm = true;
+                            }
                         }
                         if peek.kind == TokenKind.StringLit {
                             if check(tokens, cur + 1, TokenKind.Colon) {
                                 is_new_arm = true;
                             }
                         }
+                        if peek.kind == TokenKind.CharLit {
+                            if check(tokens, cur + 1, TokenKind.Colon) {
+                                is_new_arm = true;
+                            }
+                            if check(tokens, cur + 1, TokenKind.Ident) and tokens.get(cur + 1).value == "to" {
+                                is_new_arm = true;
+                            }
+                        }
                         if peek.kind == TokenKind.Ident {
                             if check(tokens, cur + 1, TokenKind.Colon) {
+                                is_new_arm = true;
+                            }
+                            if check(tokens, cur + 1, TokenKind.Ident) and tokens.get(cur + 1).value == "to" {
                                 is_new_arm = true;
                             }
                         }
