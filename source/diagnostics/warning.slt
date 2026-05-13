@@ -28,7 +28,7 @@ AnalysisWarning make_warning(WarnKind kind, string message, string hint, Span lo
 AnalysisWarning unused_variable(string name, Span location) {
     return make_warning(
         WarnKind.UnusedVariable,
-        "Unused variable: " + name,
+        name + " is declared but never used",
         "Prefix with _ to suppress: _" + name,
         location
     );
@@ -37,7 +37,7 @@ AnalysisWarning unused_variable(string name, Span location) {
 AnalysisWarning unused_function(string name, Span location) {
     return make_warning(
         WarnKind.UnusedFunction,
-        "Unused function: " + name,
+        name + " is declared but never called",
         "Prefix with _ to suppress: _" + name,
         location
     );
@@ -46,7 +46,7 @@ AnalysisWarning unused_function(string name, Span location) {
 AnalysisWarning unused_import(string name, Span location) {
     return make_warning(
         WarnKind.UnusedImport,
-        "Unused import: " + name,
+        name + " is imported but not used",
         "Remove the use statement if " + name + " is not needed",
         location
     );
@@ -55,8 +55,8 @@ AnalysisWarning unused_import(string name, Span location) {
 AnalysisWarning unreachable_code(Span location) {
     return make_warning(
         WarnKind.UnreachableCode,
-        "Unreachable code",
-        "This code can never be reached — remove it or fix the logic above",
+        "This code can never be reached",
+        "Remove it or fix the logic above",
         location
     );
 }
@@ -64,8 +64,8 @@ AnalysisWarning unreachable_code(Span location) {
 AnalysisWarning redundant_return(Span location) {
     return make_warning(
         WarnKind.RedundantReturn,
-        "Redundant return statement",
-        "This return is not needed at the end of a void function",
+        "Return at end of void function",
+        "This return is not needed",
         location
     );
 }

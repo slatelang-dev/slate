@@ -51,7 +51,7 @@ AnalysisError make_error(ErrorKind kind, string message, string hint, Span locat
 AnalysisError undefined_variable(string name, Span location) {
     return make_error(
         ErrorKind.UndefinedVariable,
-        "Undefined variable: " + name,
+        name + " is not defined",
         "Make sure " + name + " is declared before you use it",
         location
     );
@@ -60,7 +60,7 @@ AnalysisError undefined_variable(string name, Span location) {
 AnalysisError undefined_function(string name, Span location) {
     return make_error(
         ErrorKind.UndefinedFunction,
-        "Undefined function: " + name,
+        name + " is not declared",
         "Make sure " + name + " is declared before you call it",
         location
     );
@@ -69,7 +69,7 @@ AnalysisError undefined_function(string name, Span location) {
 AnalysisError duplicate_variable(string name, Span location) {
     return make_error(
         ErrorKind.DuplicateVariable,
-        "Variable already declared: " + name,
+        name + " is already declared",
         "Choose a different name or remove the duplicate declaration",
         location
     );
@@ -78,7 +78,7 @@ AnalysisError duplicate_variable(string name, Span location) {
 AnalysisError duplicate_function(string name, Span location) {
     return make_error(
         ErrorKind.DuplicateFunction,
-        "Function already declared: " + name,
+        name + " is already declared",
         "Choose a different name or remove the duplicate declaration",
         location
     );
@@ -87,7 +87,7 @@ AnalysisError duplicate_function(string name, Span location) {
 AnalysisError type_mismatch(string expected, string got, Span location) {
     return make_error(
         ErrorKind.TypeMismatch,
-        "Type mismatch: expected " + expected + " but got " + got,
+        "expected " + expected + " but got " + got,
         "Make sure the value matches the expected type",
         location
     );
@@ -96,7 +96,7 @@ AnalysisError type_mismatch(string expected, string got, Span location) {
 AnalysisError immutable_assignment(string name, Span location) {
     return make_error(
         ErrorKind.ImmutableAssignment,
-        "Cannot assign to immutable variable: " + name,
+        name + " cannot be reassigned",
         "Declare " + name + " as mutable to allow reassignment",
         location
     );
@@ -105,7 +105,7 @@ AnalysisError immutable_assignment(string name, Span location) {
 AnalysisError missing_return(string fn_name, string return_type, Span location) {
     return make_error(
         ErrorKind.MissingReturn,
-        "Function " + fn_name + " does not return on all paths",
+        fn_name + " does not return on all paths",
         "Add a return statement that returns a " + return_type,
         location
     );
@@ -123,7 +123,7 @@ AnalysisError invalid_arg_count(string name, int expected, int got, Span locatio
 AnalysisError uninitialized_variable(string name, Span location) {
     return make_error(
         ErrorKind.UninitializedVariable,
-        "Variable used before initialization: " + name,
+        name + " used before initialization",
         "Make sure " + name + " is assigned a value before you use it",
         location
     );
