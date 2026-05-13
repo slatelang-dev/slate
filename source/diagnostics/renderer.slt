@@ -46,39 +46,35 @@ string render_location(Span s) {
 # Render a single error
 
 string error_kind_label(ErrorKind kind) {
-    match kind {
-        ErrorKind.UndefinedVariable:    return "UndefinedVar",
-        ErrorKind.UndefinedFunction:    return "UndefinedFn",
-        ErrorKind.DuplicateVariable:    return "DuplicateVar",
-        ErrorKind.DuplicateFunction:    return "DuplicateFn",
-        ErrorKind.DuplicateParam:       return "DuplicateParam",
-        ErrorKind.DuplicateField:       return "DuplicateField",
-        ErrorKind.TypeMismatch:         return "TypeMismatch",
-        ErrorKind.InvalidAssignment:    return "InvalidAssign",
-        ErrorKind.InvalidReturn:        return "InvalidReturn",
-        ErrorKind.InvalidArgCount:      return "InvalidArgCount",
-        ErrorKind.InvalidArgType:       return "InvalidArgType",
-        ErrorKind.InvalidCondition:     return "InvalidCondition",
-        ErrorKind.InvalidOperand:       return "InvalidOperand",
-        ErrorKind.ImmutableAssignment:  return "ImmutableAssign",
-        ErrorKind.UninitializedVariable: return "UninitializedVar",
-        ErrorKind.MissingReturn:        return "MissingReturn",
-        ErrorKind.UnreachableCode:      return "UnreachableCode",
-        ErrorKind.InvalidUse:           return "InvalidUse",
-        ErrorKind.CircularUse:          return "CircularUse",
-        else: return "Unknown",
-    }
+    if kind == ErrorKind.UndefinedVariable   { return "UndefinedVar"; }
+    if kind == ErrorKind.UndefinedFunction   { return "UndefinedFn"; }
+    if kind == ErrorKind.DuplicateVariable   { return "DuplicateVar"; }
+    if kind == ErrorKind.DuplicateFunction   { return "DuplicateFn"; }
+    if kind == ErrorKind.DuplicateParam      { return "DuplicateParam"; }
+    if kind == ErrorKind.DuplicateField      { return "DuplicateField"; }
+    if kind == ErrorKind.TypeMismatch        { return "TypeMismatch"; }
+    if kind == ErrorKind.InvalidAssignment   { return "InvalidAssign"; }
+    if kind == ErrorKind.InvalidReturn       { return "InvalidReturn"; }
+    if kind == ErrorKind.InvalidArgCount     { return "InvalidArgCount"; }
+    if kind == ErrorKind.InvalidArgType      { return "InvalidArgType"; }
+    if kind == ErrorKind.InvalidCondition    { return "InvalidCondition"; }
+    if kind == ErrorKind.InvalidOperand      { return "InvalidOperand"; }
+    if kind == ErrorKind.ImmutableAssignment { return "ImmutableAssign"; }
+    if kind == ErrorKind.UninitializedVariable { return "UninitializedVar"; }
+    if kind == ErrorKind.MissingReturn       { return "MissingReturn"; }
+    if kind == ErrorKind.UnreachableCode     { return "UnreachableCode"; }
+    if kind == ErrorKind.InvalidUse          { return "InvalidUse"; }
+    if kind == ErrorKind.CircularUse         { return "CircularUse"; }
+    return "Unknown";
 }
 
 string warning_kind_label(WarnKind kind) {
-    match kind {
-        WarnKind.UnusedVariable:  return "UnusedVar",
-        WarnKind.UnusedFunction:  return "UnusedFn",
-        WarnKind.UnusedImport:    return "UnusedImport",
-        WarnKind.UnreachableCode: return "UnreachableCode",
-        WarnKind.RedundantReturn: return "RedundantReturn",
-        else: return "Unknown",
-    }
+    if kind == WarnKind.UnusedVariable   { return "UnusedVar"; }
+    if kind == WarnKind.UnusedFunction   { return "UnusedFn"; }
+    if kind == WarnKind.UnusedImport     { return "UnusedImport"; }
+    if kind == WarnKind.UnreachableCode  { return "UnreachableCode"; }
+    if kind == WarnKind.RedundantReturn  { return "RedundantReturn"; }
+    return "Unknown";
 }
 
 string render_error(AnalysisError err, string source) {
