@@ -53,6 +53,7 @@ bool types_compatible(string expected, string got) {
     if expected == "unknown"    { return true; }
     if got == "unknown"         { return true; }
     if got == "void"    { return true; }
+    if got == "empty"   { return true; }
     if expected == "option"     { return got == "option" or got == "none"; }
     if expected == "result"     { return got == "result"; }
     if expected == "float" and got == "int" { return true; }
@@ -65,6 +66,10 @@ CheckResult check_var_decl(Node node, Scope scope, string file) {
     string declared_type = node.children.get(0).value;
     Node init_expr = node.children.get(1);
     CheckResult init_check = check_expr(init_expr, scope, file);
+
+    if declared_type == "" {
+        return init_check;
+    }
 
     if init_check.inferred_type == "unknown" {
         return check_ok(declared_type);
