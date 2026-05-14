@@ -12,8 +12,6 @@ use constructors;
 # Parse struct field: type name;
 
 ParseResult parse_field(list(Token) tokens, int pos) {
-    int line = tokens.get(pos).line;
-    int col = tokens.get(pos).col;
     ParseResult type_result = parse_type(tokens, pos);
     if type_result.success == false { return type_result; }
     Token name_tok = tokens.get(type_result.pos);
@@ -22,7 +20,7 @@ ParseResult parse_field(list(Token) tokens, int pos) {
     if after_semi == -1 {
         return parse_err(expect_error("; after field", tokens, type_result.pos + 1), type_result.pos + 1);
     }
-    return parse_ok(make_field(name_tok.value, type_result.node, line, col), after_semi);
+    return parse_ok(make_field(name_tok.value, type_result.node, name_tok.line, name_tok.col), after_semi);
 }
 
 # Parse struct declaration: [private] struct Name { fields and methods }
