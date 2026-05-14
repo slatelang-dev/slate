@@ -8,17 +8,12 @@ enum ErrorKind {
     UndefinedFunction,
     DuplicateVariable,
     DuplicateFunction,
-    DuplicateParam,
-    DuplicateField,
 
     # Type errors
     TypeMismatch,
-    InvalidAssignment,
     InvalidReturn,
     InvalidArgCount,
-    InvalidArgType,
     InvalidCondition,
-    InvalidOperand,
 
     # Mutability errors
     ImmutableAssignment,
@@ -26,7 +21,6 @@ enum ErrorKind {
 
     # Return errors
     MissingReturn,
-    UnreachableCode,
 
     # Use errors
     InvalidUse,

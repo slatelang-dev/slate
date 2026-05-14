@@ -50,19 +50,13 @@ string error_kind_label(ErrorKind kind) {
     if kind == ErrorKind.UndefinedFunction   { return "UndefinedFn"; }
     if kind == ErrorKind.DuplicateVariable   { return "DuplicateVar"; }
     if kind == ErrorKind.DuplicateFunction   { return "DuplicateFn"; }
-    if kind == ErrorKind.DuplicateParam      { return "DuplicateParam"; }
-    if kind == ErrorKind.DuplicateField      { return "DuplicateField"; }
     if kind == ErrorKind.TypeMismatch        { return "TypeMismatch"; }
-    if kind == ErrorKind.InvalidAssignment   { return "InvalidAssign"; }
     if kind == ErrorKind.InvalidReturn       { return "InvalidReturn"; }
     if kind == ErrorKind.InvalidArgCount     { return "InvalidArgCount"; }
-    if kind == ErrorKind.InvalidArgType      { return "InvalidArgType"; }
     if kind == ErrorKind.InvalidCondition    { return "InvalidCondition"; }
-    if kind == ErrorKind.InvalidOperand      { return "InvalidOperand"; }
     if kind == ErrorKind.ImmutableAssignment { return "ImmutableAssign"; }
     if kind == ErrorKind.UninitializedVariable { return "UninitializedVar"; }
     if kind == ErrorKind.MissingReturn       { return "MissingReturn"; }
-    if kind == ErrorKind.UnreachableCode     { return "UnreachableCode"; }
     if kind == ErrorKind.InvalidUse          { return "InvalidUse"; }
     if kind == ErrorKind.CircularUse         { return "CircularUse"; }
     return "Unknown";
