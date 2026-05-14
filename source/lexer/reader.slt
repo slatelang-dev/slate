@@ -52,6 +52,8 @@ TokenKind keyword_or_ident(string kw_value) {
 }
 
 Token read_ident(list(string) rd_chars, LexState rd_s) {
+    int start_line = state_line(rd_s);
+    int start_col = state_col(rd_s);
     mutable LexState rd_cs = rd_s;
     mutable string ident_value = "";
     mutable bool rd_running = true;
@@ -65,10 +67,12 @@ Token read_ident(list(string) rd_chars, LexState rd_s) {
         }
     }
     TokenKind tok_kind = keyword_or_ident(ident_value);
-    return Token(kind: tok_kind, value: ident_value, line: state_line(rd_cs), col: state_col(rd_cs));
+    return Token(kind: tok_kind, value: ident_value, line: start_line, col: start_col);
 }
 
 Token read_number(list(string) rd_chars, LexState rd_s) {
+    int start_line = state_line(rd_s);
+    int start_col = state_col(rd_s);
     mutable LexState rd_cs = rd_s;
     mutable string num_value = "";
     mutable TokenKind num_kind = TokenKind.IntLit;
@@ -97,65 +101,69 @@ Token read_number(list(string) rd_chars, LexState rd_s) {
         }
         num_kind = TokenKind.FloatLit;
     }
-    return Token(kind: num_kind, value: num_value, line: state_line(rd_cs), col: state_col(rd_cs));
+    return Token(kind: num_kind, value: num_value, line: start_line, col: start_col);
 }
 
 Token read_char_lit(list(string) rd_chars, LexState rd_s) {
+    int start_line = state_line(rd_s);
+    int start_col = state_col(rd_s);
     mutable LexState rd_cs = advance(rd_chars, rd_s);
     string char_value = current_char(rd_chars, rd_cs);
     rd_cs = advance(rd_chars, rd_cs);
     rd_cs = advance(rd_chars, rd_cs);
-    return Token(kind: TokenKind.CharLit, value: char_value, line: state_line(rd_cs), col: state_col(rd_cs));
+    return Token(kind: TokenKind.CharLit, value: char_value, line: start_line, col: start_col);
 }
 
-Token make_token(TokenKind tk_kind, string tk_value, LexState rd_s) {
-    return Token(kind: tk_kind, value: tk_value, line: state_line(rd_s), col: state_col(rd_s));
+Token make_token(TokenKind tk_kind, string tk_value, int line, int col) {
+    return Token(kind: tk_kind, value: tk_value, line: line, col: col);
 }
 
 Token read_symbol(list(string) rd_chars, LexState rd_s) {
     mutable LexState rd_cs = rd_s;
     string rd_ch = current_char(rd_chars, rd_cs);
+    int start_line = state_line(rd_s);
+    int start_col = state_col(rd_s);
     rd_cs = advance(rd_chars, rd_cs);
     string rd_next = current_char(rd_chars, rd_cs);
 
     match rd_ch {
         "+":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.PlusEq,  "+=", rd_cs); }
-            return make_token(TokenKind.Plus,    "+", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.PlusEq,  "+=", start_line, start_col); }
+            return make_token(TokenKind.Plus,    "+", start_line, start_col);
         "-":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.MinusEq, "-=", rd_cs); }
-            return make_token(TokenKind.Minus,   "-", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.MinusEq, "-=", start_line, start_col); }
+            return make_token(TokenKind.Minus,   "-", start_line, start_col);
         "*":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.StarEq,  "*=", rd_cs); }
-            return make_token(TokenKind.Star,    "*", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.StarEq,  "*=", start_line, start_col); }
+            return make_token(TokenKind.Star,    "*", start_line, start_col);
         "/":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.SlashEq, "/=", rd_cs); }
-            return make_token(TokenKind.Slash,   "/", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.SlashEq, "/=", start_line, start_col); }
+            return make_token(TokenKind.Slash,   "/", start_line, start_col);
         "=":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Eq,      "==", rd_cs); }
-            return make_token(TokenKind.Assign,  "=", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Eq,      "==", start_line, start_col); }
+            return make_token(TokenKind.Assign,  "=", start_line, start_col);
         "!":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Neq,     "!=", rd_cs); }
-            return make_token(TokenKind.Illegal,  "!", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Neq,     "!=", start_line, start_col); }
+            return make_token(TokenKind.Illegal,  "!", start_line, start_col);
         "<":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Lte,     "<=", rd_cs); }
-            return make_token(TokenKind.Lt,      "<", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Lte,     "<=", start_line, start_col); }
+            return make_token(TokenKind.Lt,      "<", start_line, start_col);
         ">":
-            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Gte,     ">=", rd_cs); }
-            return make_token(TokenKind.Gt,      ">", rd_cs);
+            if rd_next == "=" { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.Gte,     ">=", start_line, start_col); }
+            return make_token(TokenKind.Gt,      ">", start_line, start_col);
         ".":
-            if rd_next == "." { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.DotDot,  "..", rd_cs); }
-            return make_token(TokenKind.Dot,     ".", rd_cs);
-        "%":  return make_token(TokenKind.Percent,   "%", rd_cs);
-        "(":  return make_token(TokenKind.LParen,    "(", rd_cs);
-        ")":  return make_token(TokenKind.RParen,    ")", rd_cs);
-        "{":  return make_token(TokenKind.LBrace,    "{", rd_cs);
-        "}":  return make_token(TokenKind.RBrace,    "}", rd_cs);
-        "[":  return make_token(TokenKind.LBracket,  "[", rd_cs);
-        "]":  return make_token(TokenKind.RBracket,  "]", rd_cs);
-        ";":  return make_token(TokenKind.Semicolon, ";", rd_cs);
-        ",":  return make_token(TokenKind.Comma,     ",", rd_cs);
-        ":":  return make_token(TokenKind.Colon,     ":", rd_cs);
-        else: return make_token(TokenKind.Illegal,   rd_ch,  rd_cs);
+            if rd_next == "." { rd_cs = advance(rd_chars, rd_cs); return make_token(TokenKind.DotDot,  "..", start_line, start_col); }
+            return make_token(TokenKind.Dot,     ".", start_line, start_col);
+        "%":  return make_token(TokenKind.Percent,   "%", start_line, start_col);
+        "(":  return make_token(TokenKind.LParen,    "(", start_line, start_col);
+        ")":  return make_token(TokenKind.RParen,    ")", start_line, start_col);
+        "{":  return make_token(TokenKind.LBrace,    "{", start_line, start_col);
+        "}":  return make_token(TokenKind.RBrace,    "}", start_line, start_col);
+        "[":  return make_token(TokenKind.LBracket,  "[", start_line, start_col);
+        "]":  return make_token(TokenKind.RBracket,  "]", start_line, start_col);
+        ";":  return make_token(TokenKind.Semicolon, ";", start_line, start_col);
+        ",":  return make_token(TokenKind.Comma,     ",", start_line, start_col);
+        ":":  return make_token(TokenKind.Colon,     ":", start_line, start_col);
+        else: return make_token(TokenKind.Illegal,   rd_ch,  start_line, start_col);
     }
 }
