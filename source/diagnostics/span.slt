@@ -12,7 +12,7 @@ struct Span {
 # Constructors
 
 Span make_span(string file, int line, int col, int length) {
-    return Span(file: file, line: line, col: col, length: length);
+    return Span(file: file, line: line, col: col + 1, length: length);
 }
 
 Span make_span_point(string file, int line, int col) {
