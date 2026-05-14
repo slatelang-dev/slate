@@ -165,9 +165,6 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     }
 
     if node.kind == NodeKind.MethodCall or node.kind == NodeKind.FieldAccess {
-        if node.children.len() > 0 {
-            return check_expr(node.children.get(0), scope, file);
-        }
         return check_ok("unknown");
     }
 
