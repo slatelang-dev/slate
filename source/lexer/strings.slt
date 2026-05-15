@@ -41,9 +41,9 @@ list(Token) read_string(list(string) str_chars, LexState str_s) {
             str_cs = advance(str_chars, str_cs);
             string esc = current_char(str_chars, str_cs);
             str_cs = advance(str_chars, str_cs);
-            if esc == "n"  { current = current + "\n"; }
-            else if esc == "t"  { current = current + "\t"; }
-            else if esc == "r"  { current = current + "\r"; }
+            if esc == "n"  { current = current + "\u000a"; }
+            else if esc == "t"  { current = current + "\u0009"; }
+            else if esc == "r"  { current = current + "\u000d"; }
             else if esc == "\\" { current = current + "\\"; }
             else if esc == "\"" { current = current + "\""; }
             else if esc == "u" {
