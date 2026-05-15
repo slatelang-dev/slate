@@ -96,13 +96,13 @@ list(Token) read_string(list(string) str_chars, LexState str_s) {
                     list(string) ascii_chars = ascii.chars();
                     current = current + ascii_chars.get(hex_code - 32);
                 } else if hex_code == 10 {
-                    current = current + run("printf", "\\x0a").trim();
+                    current = current + run("printf", "\\x0a");
                 } else if hex_code == 9 {
-                    current = current + run("printf", "\\x09").trim();
+                    current = current + run("printf", "\\x09");
                 } else if hex_code == 13 {
-                    current = current + run("printf", "\\x0d").trim();
+                    current = current + run("printf", "\\x0d");
                 } else if hex_code == 27 {
-                    current = current + run("printf", "\\x1b").trim();
+                    current = current + run("printf", "\\x1b");
                 }
             }
         } else {
