@@ -50,7 +50,7 @@ string render_source(Span s, string source) {
 # Render the location header — file:line:col
 
 string render_location(Span s) {
-    return gray("   ╭─[ ") + slate(s.file + ":" + string(s.line) + ":" + string(s.col)) + gray(" ]");
+    return gray("    ╭─[ ") + slate(s.file + ":" + string(s.line) + ":" + string(s.col)) + gray(" ]");
 }
 
 # Render a single error
@@ -85,10 +85,10 @@ string render_error(AnalysisError err, string source) {
     mutable string out = "";
     out = out + bold_red("Error") + gray("[") + error_kind_label(err.kind) + gray("]") + gray(": ") + err.message + "\n";
     out = out + render_location(err.location) + "\n";
-    out = out + gray("   │\n");
+    out = out + gray("    │\n");
     out = out + render_source(err.location, source) + "\n";
-    out = out + gray("   │\n");
-    out = out + gray("   ╰── ") + yellow("hint: " + err.hint) + "\n";
+    out = out + gray("    │\n");
+    out = out + gray("    ╰── ") + yellow("hint: " + err.hint) + "\n";
     return out;
 }
 
@@ -98,10 +98,10 @@ string render_warning(AnalysisWarning warn, string source) {
     mutable string out = "";
     out = out + bold_yellow("Warning") + gray("[") + warning_kind_label(warn.kind) + gray("]") + gray(": ") + warn.message + "\n";
     out = out + render_location(warn.location) + "\n";
-    out = out + gray("   │\n");
+    out = out + gray("    │\n");
     out = out + render_source(warn.location, source) + "\n";
-    out = out + gray("   │\n");
-    out = out + gray("   ╰── ") + gray("hint: " + warn.hint) + "\n";
+    out = out + gray("    │\n");
+    out = out + gray("    ╰── ") + gray("hint: " + warn.hint) + "\n";
     return out;
 }
 
