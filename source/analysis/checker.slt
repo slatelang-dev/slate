@@ -129,7 +129,7 @@ CheckResult check_binary_op(Node node, Scope scope, string file) {
 string infer_method_type(string method, string receiver_type) {
     if method == "len" { return "int"; }
     if method == "contains" or method == "starts_with" or method == "ends_with" or method == "exists" or method == "has" { return "bool"; }
-    if method == "get" or method == "first" or method == "last" { return "unknown"; }
+    if method == "get" or method == "first" or method == "last" or method == "or" { return "unknown"; }
     if method == "add" or method == "remove" or method == "sort" or method == "merge" or method == "split" or method == "chars" { return "list"; }
     if method == "keys" or method == "values" { return "list"; }
     if method == "upper" or method == "lower" or method == "trim" or method == "replace" or method == "reverse" or method == "repeat" or method == "hash" { return "string"; }
