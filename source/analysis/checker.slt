@@ -171,7 +171,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     }
 
     if node.kind == NodeKind.FieldAccess {
-        return check_expr(node.children.get(0), scope, file);
+        return check_ok("unknown");
     }
 
     if node.kind == NodeKind.MethodCall {
