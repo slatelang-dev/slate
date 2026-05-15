@@ -91,7 +91,7 @@ CheckResult check_assign(Node node, Scope scope, string file) {
     if sym.exists() == false {
         return check_ok("unknown");
     }
-    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0));
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
     if symbol_is_immutable(s) {
         Span sp = make_span(file, node.line, node.col, node.value.len());
         AnalysisError err = immutable_assignment(node.value, sp);
@@ -137,7 +137,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     if node.kind == NodeKind.Ident {
         option(Symbol) sym = lookup_symbol(scope, node.value);
         if sym.exists() {
-            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0));
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
             return check_ok(s.type_name);
         }
         return check_ok("unknown");
@@ -156,12 +156,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     }
 
     if node.kind == NodeKind.Call {
-        option(Symbol) sym = lookup_symbol(scope, node.value);
-        if sym.exists() {
-            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0));
-            return check_ok(s.type_name);
-        }
-        return check_ok("unknown");
+        return check_call(node, scope, file);
     }
 
     if node.kind == NodeKind.MethodCall or node.kind == NodeKind.FieldAccess {
@@ -169,6 +164,20 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     }
 
     return check_ok("unknown");
+}
+
+CheckResult check_call(Node node, Scope scope, string file) {
+    option(Symbol) sym = lookup_symbol(scope, node.value);
+    if sym.exists() == false {
+        return check_ok("unknown");
+    }
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
+    if s.param_count >= 0 and s.param_count != node.children.len() {
+        Span sp = make_span(file, node.line, node.col, node.value.len());
+        AnalysisError err = invalid_arg_count(node.value, s.param_count, node.children.len(), sp);
+        return check_err(err);
+    }
+    return check_ok(s.type_name);
 }
 
 # Check a statement
@@ -224,6 +233,9 @@ CheckResult check_stmt(Node node, Scope scope, string file) {
             i += 1;
         }
         return r;
+    }
+    if node.kind == NodeKind.Call {
+        return check_call(node, scope, file);
     }
     return check_ok("void");
 }

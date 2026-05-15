@@ -49,7 +49,8 @@ Scope mark_used(string name, Scope scope) {
                 used: true,
                 scope_depth: sym.scope_depth,
                 line: sym.line,
-                col: sym.col
+                col: sym.col,
+                param_count: sym.param_count
             );
             updated = updated.add(marked);
         } else {

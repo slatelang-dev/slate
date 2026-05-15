@@ -21,6 +21,7 @@ struct Symbol {
     int scope_depth;
     int line;
     int col;
+    int param_count;
 }
 
 Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int col) {
@@ -35,7 +36,8 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
         used: false,
         scope_depth: 0,
         line: line,
-        col: col
+        col: col,
+        param_count: 0
     );
 }
 
@@ -51,7 +53,8 @@ Symbol make_mutable_var(string name, string type_name, int line, int col) {
         used: false,
         scope_depth: 0,
         line: line,
-        col: col
+        col: col,
+        param_count: 0
     );
 }
 
@@ -67,7 +70,8 @@ Symbol make_const_var(string name, string type_name, int line, int col) {
         used: false,
         scope_depth: 0,
         line: line,
-        col: col
+        col: col,
+        param_count: 0
     );
 }
 
@@ -79,8 +83,22 @@ Symbol make_param(string name, string type_name, int line, int col) {
     return make_symbol(name, type_name, SymbolKind.Param, line, col);
 }
 
-Symbol make_fn_symbol(string name, string return_type, int line, int col) {
-    return make_symbol(name, return_type, SymbolKind.Function, line, col);
+Symbol make_fn_symbol(string name, string return_type, int param_count, int line, int col) {
+    Symbol s = make_symbol(name, return_type, SymbolKind.Function, line, col);
+    return Symbol(
+        name: s.name,
+        type_name: s.type_name,
+        kind: s.kind,
+        is_mutable: s.is_mutable,
+        is_constant: s.is_constant,
+        is_affine: s.is_affine,
+        initialized: s.initialized,
+        used: s.used,
+        scope_depth: s.scope_depth,
+        line: s.line,
+        col: s.col,
+        param_count: param_count
+    );
 }
 
 Symbol make_affine_var(string name, string type_name, int line, int col) {
@@ -95,7 +113,8 @@ Symbol make_affine_var(string name, string type_name, int line, int col) {
         used: false,
         scope_depth: 0,
         line: line,
-        col: col
+        col: col,
+        param_count: 0
     );
 }
 
@@ -166,7 +185,8 @@ Scope declare_symbol(Scope scope, Symbol sym) {
         used: sym.used,
         scope_depth: scope.depth,
         line: sym.line,
-        col: sym.col
+        col: sym.col,
+        param_count: sym.param_count
     );
     table(string, int) updated_index = scope.sym_index.set(sym.name, scope.depth);
     return Scope(symbols: scope.symbols.add(tagged), depth: scope.depth, sym_index: updated_index);

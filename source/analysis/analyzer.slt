@@ -44,7 +44,7 @@ Scope seed_builtins(Scope seed_scope) {
         "strlen", "strcmp", "puts", "read_n", "time", "args");
     mutable int builtins_i = 0;
     while builtins_i < builtins.len() {
-        Symbol sym = make_fn_symbol(builtins.get(builtins_i), "unknown", 0, 0);
+        Symbol sym = make_fn_symbol(builtins.get(builtins_i), "unknown", -1, 0, 0);
         if symbol_exists_in_current_scope(seed_s, builtins.get(builtins_i)) == false {
             seed_s = declare_symbol(seed_s, sym);
         }
