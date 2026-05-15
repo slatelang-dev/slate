@@ -95,8 +95,14 @@ list(Token) read_string(list(string) str_chars, LexState str_s) {
                     string ascii = "                                 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
                     list(string) ascii_chars = ascii.chars();
                     current = current + ascii_chars.get(hex_code - 32);
+                } else if hex_code == 10 {
+                    current = current + run("printf", "\\x0a").trim();
+                } else if hex_code == 9 {
+                    current = current + run("printf", "\\x09").trim();
+                } else if hex_code == 13 {
+                    current = current + run("printf", "\\x0d").trim();
                 } else if hex_code == 27 {
-                    current = current + "\u001b";
+                    current = current + run("printf", "\\x1b").trim();
                 }
             }
         } else {
