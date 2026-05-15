@@ -16,8 +16,8 @@ CheckResult check_ok(string inferred_type) {
     return CheckResult(errors: empty, inferred_type: inferred_type);
 }
 
-CheckResult check_err(AnalysisError err) {
-    return CheckResult(errors: (err,), inferred_type: "unknown");
+CheckResult check_err(AnalysisError analysis_err) {
+    return CheckResult(errors: (analysis_err,), inferred_type: "unknown");
 }
 
 CheckResult merge_check(CheckResult a, CheckResult b) {

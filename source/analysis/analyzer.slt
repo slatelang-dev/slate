@@ -127,14 +127,14 @@ AnalysisResult analyse_fn(Node fn_node, string file, Scope fn_scope) {
     return result_out;
 }
 
-bool is_new_error(AnalysisError err, list(AnalysisError) known) {
+bool is_new_error(AnalysisError check_err, list(AnalysisError) known) {
     mutable int i = 0;
     while i < known.len() {
         AnalysisError existing = known.get(i);
-        if existing.kind == err.kind
-        and existing.location.file == err.location.file
-        and existing.location.line == err.location.line
-        and existing.location.col == err.location.col {
+        if existing.kind == check_err.kind
+        and existing.location.file == check_err.location.file
+        and existing.location.line == check_err.location.line
+        and existing.location.col == check_err.location.col {
             return false;
         }
         i += 1;

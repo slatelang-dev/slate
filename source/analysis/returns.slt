@@ -15,8 +15,8 @@ ReturnResult return_ok(bool always_returns) {
     return ReturnResult(errors: empty, always_returns: always_returns);
 }
 
-ReturnResult return_err(AnalysisError err) {
-    return ReturnResult(errors: (err,), always_returns: false);
+ReturnResult return_err(AnalysisError return_err_val) {
+    return ReturnResult(errors: (return_err_val,), always_returns: false);
 }
 
 ReturnResult merge_return(ReturnResult a, ReturnResult b) {

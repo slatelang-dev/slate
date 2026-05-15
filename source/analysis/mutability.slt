@@ -15,8 +15,8 @@ MutResult mut_ok() {
     return MutResult(errors: empty);
 }
 
-MutResult mut_err(AnalysisError err) {
-    return MutResult(errors: (err,));
+MutResult mut_err(AnalysisError mut_error) {
+    return MutResult(errors: (mut_error,));
 }
 
 MutResult merge_mut(MutResult a, MutResult b) {

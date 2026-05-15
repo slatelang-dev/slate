@@ -81,14 +81,14 @@ string warning_kind_label(WarnKind kind) {
     return "Unknown";
 }
 
-string render_error(AnalysisError err, string source) {
+string render_error(AnalysisError render_err, string source) {
     mutable string out = "";
-    out = out + bold_red("Error") + gray("[") + error_kind_label(err.kind) + gray("]") + gray(": ") + err.message + "\n";
-    out = out + render_location(err.location) + "\n";
+    out = out + bold_red("Error") + gray("[") + error_kind_label(render_err.kind) + gray("]") + gray(": ") + render_err.message + "\n";
+    out = out + render_location(render_err.location) + "\n";
     out = out + gray("    │\n");
-    out = out + render_source(err.location, source) + "\n";
+    out = out + render_source(render_err.location, source) + "\n";
     out = out + gray("    │\n");
-    out = out + gray("    ╰── ") + yellow("hint: " + err.hint) + "\n";
+    out = out + gray("    ╰── ") + yellow("hint: " + render_err.hint) + "\n";
     return out;
 }
 
