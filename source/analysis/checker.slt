@@ -126,6 +126,17 @@ CheckResult check_binary_op(Node node, Scope scope, string file) {
     return r;
 }
 
+string infer_method_type(string method, string receiver_type) {
+    if method == "len" { return "int"; }
+    if method == "contains" or method == "starts_with" or method == "ends_with" or method == "exists" or method == "has" { return "bool"; }
+    if method == "get" or method == "first" or method == "last" { return "unknown"; }
+    if method == "add" or method == "remove" or method == "sort" or method == "merge" or method == "split" or method == "chars" { return "list"; }
+    if method == "keys" or method == "values" { return "list"; }
+    if method == "upper" or method == "lower" or method == "trim" or method == "replace" or method == "reverse" or method == "repeat" or method == "hash" { return "string"; }
+    if method == "read" or method == "write" or method == "append" { return "unknown"; }
+    return receiver_type;
+}
+
 # Check an expression — returns inferred type
 
 CheckResult check_expr(Node node, Scope scope, string file) {
@@ -159,8 +170,14 @@ CheckResult check_expr(Node node, Scope scope, string file) {
         return check_call(node, scope, file);
     }
 
-    if node.kind == NodeKind.MethodCall or node.kind == NodeKind.FieldAccess {
-        return check_ok("unknown");
+    if node.kind == NodeKind.FieldAccess {
+        return check_expr(node.children.get(0), scope, file);
+    }
+
+    if node.kind == NodeKind.MethodCall {
+        CheckResult recv = check_expr(node.children.get(0), scope, file);
+        string result_type = infer_method_type(node.value, recv.inferred_type);
+        return CheckResult(errors: recv.errors, inferred_type: result_type);
     }
 
     return check_ok("unknown");
