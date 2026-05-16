@@ -96,7 +96,11 @@ string render_related_span(RelatedSpan rs, string source) {
     }
     out = out + gray(gutter + "·   ") + slate("--> ") + slate(rs.location.file + ":" + string(rs.location.line) + ":" + string(rs.location.col)) + "\n";
     out = out + gray(gutter + "·\n");
-    out = out + render_source(rs.location, source, " ") + "\n";
+    mutable string span_source = source;
+    if rs.location.file != "" and file(rs.location.file).exists() {
+        span_source = file(rs.location.file).read();
+    }
+    out = out + render_source(rs.location, span_source, " ") + "\n";
     return out;
 }
 
