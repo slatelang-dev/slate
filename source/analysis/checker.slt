@@ -91,7 +91,7 @@ CheckResult check_assign(Node node, Scope scope, string file) {
     if sym.exists() == false {
         return check_ok("unknown");
     }
-    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
     if symbol_is_immutable(s) {
         Span sp = make_span(file, node.line, node.col, node.value.len());
         AnalysisError err = immutable_assignment(node.value, sp);
@@ -148,7 +148,7 @@ CheckResult check_expr(Node node, Scope scope, string file) {
     if node.kind == NodeKind.Ident {
         option(Symbol) sym = lookup_symbol(scope, node.value);
         if sym.exists() {
-            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
+            Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
             return check_ok(s.type_name);
         }
         return check_ok("unknown");
@@ -188,11 +188,15 @@ CheckResult check_call(Node node, Scope scope, string file) {
     if sym.exists() == false {
         return check_ok("unknown");
     }
-    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0));
+    Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
     if s.param_count >= 0 and s.param_count != node.children.len() {
         Span sp = make_span(file, node.line, node.col, node.value.len());
-        AnalysisError err = invalid_arg_count(node.value, s.param_count, node.children.len(), sp);
-        return check_err(err);
+        mutable AnalysisError call_err = invalid_arg_count(node.value, s.param_count, node.children.len(), sp);
+        if s.file != "" and s.line > 0 {
+            Span decl_span = make_span(s.file, s.line, s.col, node.value.len());
+            call_err = error_add_note(call_err, decl_span, node.value + " declared here");
+        }
+        return check_err(call_err);
     }
     return check_ok(s.type_name);
 }

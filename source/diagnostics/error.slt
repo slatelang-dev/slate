@@ -32,12 +32,30 @@ struct AnalysisError {
     string message;
     string hint;
     Span location;
+    list(RelatedSpan) related;
 }
 
 # Constructors
 
 AnalysisError make_error(ErrorKind kind, string message, string hint, Span location) {
-    return AnalysisError(kind: kind, message: message, hint: hint, location: location);
+    return AnalysisError(kind: kind, message: message, hint: hint, location: location, related: empty);
+}
+
+AnalysisError error_add_related(AnalysisError err, list(RelatedSpan) extra) {
+    mutable list(RelatedSpan) merged = err.related;
+    mutable int i = 0;
+    while i < extra.len() {
+        merged = merged.add(extra.get(i));
+        i += 1;
+    }
+    return AnalysisError(
+        kind: err.kind, message: err.message, hint: err.hint,
+        location: err.location, related: merged
+    );
+}
+
+AnalysisError error_add_note(AnalysisError err, Span location, string label) {
+    return error_add_related(err, (make_note_span(location, label),));
 }
 
 # Common error constructors

@@ -15,12 +15,30 @@ struct AnalysisWarning {
     string message;
     string hint;
     Span location;
+    list(RelatedSpan) related;
 }
 
 # Constructors
 
 AnalysisWarning make_warning(WarnKind kind, string message, string hint, Span location) {
-    return AnalysisWarning(kind: kind, message: message, hint: hint, location: location);
+    return AnalysisWarning(kind: kind, message: message, hint: hint, location: location, related: empty);
+}
+
+AnalysisWarning warning_add_related(AnalysisWarning warn, list(RelatedSpan) extra) {
+    mutable list(RelatedSpan) merged = warn.related;
+    mutable int i = 0;
+    while i < extra.len() {
+        merged = merged.add(extra.get(i));
+        i += 1;
+    }
+    return AnalysisWarning(
+        kind: warn.kind, message: warn.message, hint: warn.hint,
+        location: warn.location, related: merged
+    );
+}
+
+AnalysisWarning warning_add_note(AnalysisWarning warn, Span location, string label) {
+    return warning_add_related(warn, (make_note_span(location, label),));
 }
 
 # Common warning constructors

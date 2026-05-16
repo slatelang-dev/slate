@@ -50,7 +50,8 @@ Scope mark_used(string name, Scope scope) {
                 scope_depth: sym.scope_depth,
                 line: sym.line,
                 col: sym.col,
-                param_count: sym.param_count
+                param_count: sym.param_count,
+                file: sym.file
             );
             updated = updated.add(marked);
         } else {

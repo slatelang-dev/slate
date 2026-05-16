@@ -81,12 +81,41 @@ string warning_kind_label(WarnKind kind) {
     return "Unknown";
 }
 
+# Render a single related span — shown as `= kind: label` with source excerpt
+
+string render_related_span(RelatedSpan rs, string source) {
+    mutable string out = "";
+    out = out + gray("    ·\n");
+    if rs.kind == "note" {
+        out = out + gray("    = ") + blue("note: ") + rs.label + "\n";
+    } else if rs.kind == "help" {
+        out = out + gray("    = ") + green("help: ") + rs.label + "\n";
+    } else {
+        out = out + gray("    = ") + rs.label + "\n";
+    }
+    out = out + gray("    ·   ") + slate("--> ") + slate(rs.location.file + ":" + string(rs.location.line) + ":" + string(rs.location.col)) + "\n";
+    out = out + gray("    ·\n");
+    out = out + render_source(rs.location, source) + "\n";
+    return out;
+}
+
+string render_related_spans(list(RelatedSpan) related, string source) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < related.len() {
+        out = out + render_related_span(related.get(i), source);
+        i += 1;
+    }
+    return out;
+}
+
 string render_error(AnalysisError render_err, string source) {
     mutable string out = "";
     out = out + bold_red("Error") + gray("[") + error_kind_label(render_err.kind) + gray("]") + gray(": ") + render_err.message + "\n";
     out = out + render_location(render_err.location) + "\n";
     out = out + gray("    │\n");
     out = out + render_source(render_err.location, source) + "\n";
+    out = out + render_related_spans(render_err.related, source);
     out = out + gray("    │\n");
     out = out + gray("    ╰── ") + yellow("hint: " + render_err.hint) + "\n";
     return out;
@@ -100,6 +129,7 @@ string render_warning(AnalysisWarning warn, string source) {
     out = out + render_location(warn.location) + "\n";
     out = out + gray("    │\n");
     out = out + render_source(warn.location, source) + "\n";
+    out = out + render_related_spans(warn.related, source);
     out = out + gray("    │\n");
     out = out + gray("    ╰── ") + gray("hint: " + warn.hint) + "\n";
     return out;

@@ -38,3 +38,24 @@ string span_location(Span s) {
 string span_short(Span s) {
     return "line " + string(s.line) + " col " + string(s.col);
 }
+
+# Related span — points to a secondary location that provides context
+# kind is "note", "help", "error", or "warning"
+
+struct RelatedSpan {
+    Span location;
+    string label;
+    string kind;
+}
+
+RelatedSpan make_related_span(Span location, string label, string kind) {
+    return RelatedSpan(location: location, label: label, kind: kind);
+}
+
+RelatedSpan make_note_span(Span location, string label) {
+    return RelatedSpan(location: location, label: label, kind: "note");
+}
+
+RelatedSpan make_help_span(Span location, string label) {
+    return RelatedSpan(location: location, label: label, kind: "help");
+}
