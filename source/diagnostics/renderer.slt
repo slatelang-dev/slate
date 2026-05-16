@@ -35,14 +35,14 @@ string render_caret(int col, int length) {
 
 # Render a source excerpt — file, line number, source line, caret
 
-string render_source(Span s, string source) {
+string render_source(Span s, string source, string indent = "") {
     mutable string result_str = "";
     list(string) lines = source.split("\n");
     if s.line > 0 and s.line <= lines.len() {
         string src_line = lines.get(s.line - 1);
         string line_num = string(s.line);
-        result_str = result_str + gray(" " + line_num + " │ ") + src_line + "\n";
-        result_str = result_str + gray(prefix_spaces(line_num) + " │ ") + render_caret(s.col, s.length);
+        result_str = result_str + gray(indent + " " + line_num + " │ ") + src_line + "\n";
+        result_str = result_str + gray(indent + prefix_spaces(line_num) + " │ ") + render_caret(s.col, s.length);
     }
     return result_str;
 }
@@ -95,7 +95,7 @@ string render_related_span(RelatedSpan rs, string source) {
     }
     out = out + gray("    ·   ") + slate("--> ") + slate(rs.location.file + ":" + string(rs.location.line) + ":" + string(rs.location.col)) + "\n";
     out = out + gray("    ·\n");
-    out = out + render_source(rs.location, source) + "\n";
+    out = out + render_source(rs.location, source, " ") + "\n";
     return out;
 }
 
