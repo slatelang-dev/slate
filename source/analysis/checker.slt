@@ -192,10 +192,8 @@ CheckResult check_call(Node node, Scope scope, string file) {
     if s.param_count >= 0 and s.param_count != node.children.len() {
         Span sp = make_span(file, node.line, node.col, node.value.len());
         mutable AnalysisError call_err = invalid_arg_count(node.value, s.param_count, node.children.len(), sp);
-        if s.file != "" and s.line > 0 {
-            Span decl_span = make_span(s.file, s.line, s.col, node.value.len());
-            call_err = error_add_note(call_err, decl_span, node.value + " declared here");
-        }
+        Span decl_span = make_span(s.file, s.line, s.col, node.value.len());
+        call_err = error_add_note(call_err, decl_span, node.value + " declared here");
         return check_err(call_err);
     }
     return check_ok(s.type_name);

@@ -49,8 +49,8 @@ string render_source(Span s, string source, string indent) {
 
 # Render the location header — file:line:col
 
-string render_location(Span s) {
-    return gray("    ╭─[ ") + slate(s.file + ":" + string(s.line) + ":" + string(s.col)) + gray(" ]");
+string render_location(Span s, string gutter) {
+    return gray(gutter + " ╭─[ ") + slate(s.file + ":" + string(s.line) + ":" + string(s.col)) + gray(" ]");
 }
 
 # Render a single error
@@ -111,13 +111,14 @@ string render_related_spans(list(RelatedSpan) related, string source) {
 
 string render_error(AnalysisError render_err, string source) {
     mutable string out = "";
+    string gutter = prefix_spaces(string(render_err.location.line));
     out = out + bold_red("Error") + gray("[") + error_kind_label(render_err.kind) + gray("]") + gray(": ") + render_err.message + "\n";
-    out = out + render_location(render_err.location) + "\n";
-    out = out + gray("    │\n");
+    out = out + render_location(render_err.location, gutter) + "\n";
+    out = out + gray(gutter + " │\n");
     out = out + render_source(render_err.location, source, "") + "\n";
     out = out + render_related_spans(render_err.related, source);
-    out = out + gray("    │\n");
-    out = out + gray("    ╰── ") + yellow("hint: " + render_err.hint) + "\n";
+    out = out + gray(gutter + " │\n");
+    out = out + gray(gutter + " ╰── ") + yellow("hint: " + render_err.hint) + "\n";
     return out;
 }
 
@@ -125,13 +126,14 @@ string render_error(AnalysisError render_err, string source) {
 
 string render_warning(AnalysisWarning warn, string source) {
     mutable string out = "";
+    string gutter = prefix_spaces(string(warn.location.line));
     out = out + bold_yellow("Warning") + gray("[") + warning_kind_label(warn.kind) + gray("]") + gray(": ") + warn.message + "\n";
-    out = out + render_location(warn.location) + "\n";
-    out = out + gray("    │\n");
+    out = out + render_location(warn.location, gutter) + "\n";
+    out = out + gray(gutter + " │\n");
     out = out + render_source(warn.location, source, "") + "\n";
     out = out + render_related_spans(warn.related, source);
-    out = out + gray("    │\n");
-    out = out + gray("    ╰── ") + gray("hint: " + warn.hint) + "\n";
+    out = out + gray(gutter + " │\n");
+    out = out + gray(gutter + " ╰── ") + gray("hint: " + warn.hint) + "\n";
     return out;
 }
 
