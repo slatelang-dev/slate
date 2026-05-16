@@ -35,7 +35,7 @@ string render_caret(int col, int length) {
 
 # Render a source excerpt — file, line number, source line, caret
 
-string render_source(Span s, string source, string indent = "") {
+string render_source(Span s, string source, string indent) {
     mutable string result_str = "";
     list(string) lines = source.split("\n");
     if s.line > 0 and s.line <= lines.len() {
@@ -114,7 +114,7 @@ string render_error(AnalysisError render_err, string source) {
     out = out + bold_red("Error") + gray("[") + error_kind_label(render_err.kind) + gray("]") + gray(": ") + render_err.message + "\n";
     out = out + render_location(render_err.location) + "\n";
     out = out + gray("    │\n");
-    out = out + render_source(render_err.location, source) + "\n";
+    out = out + render_source(render_err.location, source, "") + "\n";
     out = out + render_related_spans(render_err.related, source);
     out = out + gray("    │\n");
     out = out + gray("    ╰── ") + yellow("hint: " + render_err.hint) + "\n";
@@ -128,7 +128,7 @@ string render_warning(AnalysisWarning warn, string source) {
     out = out + bold_yellow("Warning") + gray("[") + warning_kind_label(warn.kind) + gray("]") + gray(": ") + warn.message + "\n";
     out = out + render_location(warn.location) + "\n";
     out = out + gray("    │\n");
-    out = out + render_source(warn.location, source) + "\n";
+    out = out + render_source(warn.location, source, "") + "\n";
     out = out + render_related_spans(warn.related, source);
     out = out + gray("    │\n");
     out = out + gray("    ╰── ") + gray("hint: " + warn.hint) + "\n";
