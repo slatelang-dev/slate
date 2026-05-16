@@ -135,7 +135,10 @@ ReturnResult check_fn_returns(Node fn_node, string file) {
 
     if ret_b.always_returns == false {
         Span s = make_span(file, fn_node.line, fn_node.col, fn_name.len());
-        AnalysisError err = missing_return(fn_name, return_type, s);
+        mutable AnalysisError err = missing_return(fn_name, return_type, s);
+        Node return_type_node = fn_node.children.get(0);
+        Span decl_span = make_span(file, return_type_node.line, return_type_node.col, return_type.len());
+        err = error_add_note(err, decl_span, "return type declared here");
         return merge_return(ret_b, return_err(err));
     }
 

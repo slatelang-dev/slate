@@ -31,7 +31,10 @@ bool is_builtin(string name) {
 ResolveResult declare_var(string name, string type_name, NodeKind kind, int line, int col, string file, Scope scope) {
     if symbol_exists_in_current_scope(scope, name) {
         Span s = make_span(file, line, col, name.len());
-        AnalysisError err = duplicate_variable(name, s);
+        mutable AnalysisError err = duplicate_variable(name, s);
+        Symbol existing = lookup_symbol(scope, name).or(Symbol(name: name, type_name: "", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
+        Span decl_span = make_span(existing.file, existing.line, existing.col, name.len());
+        err = error_add_note(err, decl_span, name + " first declared here");
         return ResolveResult(errors: (err,), warnings: empty, scope: scope);
     }
     mutable Symbol sym = make_var(name, type_name, line, col);

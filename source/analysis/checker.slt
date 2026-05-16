@@ -77,7 +77,10 @@ CheckResult check_var_decl(Node node, Scope scope, string file) {
 
     if types_compatible(declared_type, init_check.inferred_type) == false {
         Span s = make_span(file, node.line, node.col, node.value.len());
-        AnalysisError err = type_mismatch(declared_type, init_check.inferred_type, s);
+        mutable AnalysisError err = type_mismatch(declared_type, init_check.inferred_type, s);
+        Node type_node = node.children.get(0);
+        Span decl_span = make_span(file, type_node.line, type_node.col, declared_type.len());
+        err = error_add_note(err, decl_span, "declared as " + declared_type + " here");
         return merge_check(init_check, check_err(err));
     }
 
@@ -94,13 +97,17 @@ CheckResult check_assign(Node node, Scope scope, string file) {
     Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
     if symbol_is_immutable(s) {
         Span sp = make_span(file, node.line, node.col, node.value.len());
-        AnalysisError err = immutable_assignment(node.value, sp);
+        mutable AnalysisError err = immutable_assignment(node.value, sp);
+        Span decl_span = make_span(s.file, s.line, s.col, node.value.len());
+        err = error_add_note(err, decl_span, node.value + " declared here");
         return check_err(err);
     }
     CheckResult val_check = check_expr(node.children.get(0), scope, file);
     if types_compatible(s.type_name, val_check.inferred_type) == false {
         Span sp = make_span(file, node.line, node.col, node.value.len());
-        AnalysisError err = type_mismatch(s.type_name, val_check.inferred_type, sp);
+        mutable AnalysisError err = type_mismatch(s.type_name, val_check.inferred_type, sp);
+        Span decl_span = make_span(s.file, s.line, s.col, node.value.len());
+        err = error_add_note(err, decl_span, node.value + " declared here");
         return merge_check(val_check, check_err(err));
     }
     return val_check;

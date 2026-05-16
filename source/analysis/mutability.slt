@@ -39,7 +39,10 @@ MutResult check_mutable_target(string name, int line, int col, string file, Scop
     Symbol s = sym.or(Symbol(name: "", type_name: "unknown", kind: SymbolKind.Variable, is_mutable: false, is_constant: false, is_affine: false, initialized: false, used: false, scope_depth: 0, line: 0, col: 0, param_count: 0, file: ""));
     if symbol_is_immutable(s) {
         Span sp = make_span(file, line, col, name.len());
-        return mut_err(immutable_assignment(name, sp));
+        mutable AnalysisError err = immutable_assignment(name, sp);
+        Span decl_span = make_span(s.file, s.line, s.col, name.len());
+        err = error_add_note(err, decl_span, name + " declared here");
+        return mut_err(err);
     }
     return mut_ok();
 }
