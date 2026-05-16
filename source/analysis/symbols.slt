@@ -43,7 +43,7 @@ Symbol make_symbol(string name, string type_name, SymbolKind kind, int line, int
     );
 }
 
-Symbol make_mutable_var(string name, string type_name, int line, int col) {
+Symbol make_mutable_var(string name, string type_name, int line, int col, string file) {
     return Symbol(
         name: name,
         type_name: type_name,
@@ -57,11 +57,11 @@ Symbol make_mutable_var(string name, string type_name, int line, int col) {
         line: line,
         col: col,
         param_count: 0,
-        file: ""
+        file: file
     );
 }
 
-Symbol make_const_var(string name, string type_name, int line, int col) {
+Symbol make_const_var(string name, string type_name, int line, int col, string file) {
     return Symbol(
         name: name,
         type_name: type_name,
@@ -75,16 +75,44 @@ Symbol make_const_var(string name, string type_name, int line, int col) {
         line: line,
         col: col,
         param_count: 0,
-        file: ""
+        file: file
     );
 }
 
-Symbol make_var(string name, string type_name, int line, int col) {
-    return make_symbol(name, type_name, SymbolKind.Variable, line, col);
+Symbol make_var(string name, string type_name, int line, int col, string file) {
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: SymbolKind.Variable,
+        is_mutable: false,
+        is_constant: false,
+        is_affine: false,
+        initialized: true,
+        used: false,
+        scope_depth: 0,
+        line: line,
+        col: col,
+        param_count: 0,
+        file: file
+    );
 }
 
-Symbol make_param(string name, string type_name, int line, int col) {
-    return make_symbol(name, type_name, SymbolKind.Param, line, col);
+Symbol make_param(string name, string type_name, int line, int col, string file) {
+    return Symbol(
+        name: name,
+        type_name: type_name,
+        kind: SymbolKind.Param,
+        is_mutable: false,
+        is_constant: false,
+        is_affine: false,
+        initialized: true,
+        used: false,
+        scope_depth: 0,
+        line: line,
+        col: col,
+        param_count: 0,
+        file: file
+    );
 }
 
 Symbol make_fn_symbol(string name, string return_type, int param_count, int line, int col, string file) {
@@ -106,7 +134,7 @@ Symbol make_fn_symbol(string name, string return_type, int param_count, int line
     );
 }
 
-Symbol make_affine_var(string name, string type_name, int line, int col) {
+Symbol make_affine_var(string name, string type_name, int line, int col, string file) {
     return Symbol(
         name: name,
         type_name: type_name,
@@ -120,7 +148,7 @@ Symbol make_affine_var(string name, string type_name, int line, int col) {
         line: line,
         col: col,
         param_count: 0,
-        file: ""
+        file: file
     );
 }
 

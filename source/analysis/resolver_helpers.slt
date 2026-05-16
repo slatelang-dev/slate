@@ -37,15 +37,15 @@ ResolveResult declare_var(string name, string type_name, NodeKind kind, int line
         err = error_add_note(err, decl_span, name + " first declared here");
         return ResolveResult(errors: (err,), warnings: empty, scope: scope);
     }
-    mutable Symbol sym = make_var(name, type_name, line, col);
+    mutable Symbol sym = make_var(name, type_name, line, col, file);
     if kind == NodeKind.MutableDecl {
-        sym = make_mutable_var(name, type_name, line, col);
+        sym = make_mutable_var(name, type_name, line, col, file);
     } else if kind == NodeKind.ConstDecl {
-        sym = make_const_var(name, type_name, line, col);
+        sym = make_const_var(name, type_name, line, col, file);
     } else if kind == NodeKind.AffineDecl {
-        sym = make_var(name, type_name, line, col);
+        sym = make_affine_var(name, type_name, line, col, file);
     } else if kind == NodeKind.Param {
-        sym = make_param(name, type_name, line, col);
+        sym = make_param(name, type_name, line, col, file);
     }
     Scope new_scope = declare_symbol(scope, sym);
     return empty_resolve_result(new_scope);
