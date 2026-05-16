@@ -85,16 +85,17 @@ string warning_kind_label(WarnKind kind) {
 
 string render_related_span(RelatedSpan rs, string source) {
     mutable string out = "";
-    out = out + gray("    ·\n");
+    string gutter = prefix_spaces(string(rs.location.line)) + "  ";
+    out = out + gray(gutter + "·\n");
     if rs.kind == "note" {
-        out = out + gray("    = ") + blue("note: ") + rs.label + "\n";
+        out = out + gray(gutter + "= ") + blue("note: ") + rs.label + "\n";
     } else if rs.kind == "help" {
-        out = out + gray("    = ") + green("help: ") + rs.label + "\n";
+        out = out + gray(gutter + "= ") + green("help: ") + rs.label + "\n";
     } else {
-        out = out + gray("    = ") + rs.label + "\n";
+        out = out + gray(gutter + "= ") + rs.label + "\n";
     }
-    out = out + gray("    ·   ") + slate("--> ") + slate(rs.location.file + ":" + string(rs.location.line) + ":" + string(rs.location.col)) + "\n";
-    out = out + gray("    ·\n");
+    out = out + gray(gutter + "·   ") + slate("--> ") + slate(rs.location.file + ":" + string(rs.location.line) + ":" + string(rs.location.col)) + "\n";
+    out = out + gray(gutter + "·\n");
     out = out + render_source(rs.location, source, " ") + "\n";
     return out;
 }
